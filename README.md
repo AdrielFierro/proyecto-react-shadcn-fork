@@ -1,73 +1,108 @@
-# React + TypeScript + Vite
+﻿# Proyecto React + shadcn/ui
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Este proyecto está construido con **React**, **Vite**, **TypeScript**, **Tailwind CSS** y **shadcn/ui**.
 
-Currently, two official plugins are available:
+##  Características
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+-  **Vite** - Build tool ultrarrápido
+-  **React 18** - Biblioteca UI moderna
+-  **Tailwind CSS** - Framework CSS utility-first
+-  **shadcn/ui** - Componentes UI reutilizables y accesibles
+-  **TypeScript** - Type safety
+-  **ESLint** - Linter para código limpio
 
-## React Compiler
+##  Instalación
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# Instalar dependencias
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+##  Desarrollo
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# Iniciar servidor de desarrollo
+npm run dev
 ```
+
+El proyecto estará disponible en `http://localhost:5173`
+
+##  Build
+
+```bash
+# Crear build de producción
+npm run build
+
+# Preview del build
+npm run preview
+```
+
+##  Agregar Componentes shadcn/ui
+
+Para agregar más componentes de shadcn/ui:
+
+```bash
+# Agregar un componente específico
+npx shadcn@latest add [nombre-componente]
+
+# Ejemplos:
+npx shadcn@latest add card
+npx shadcn@latest add dialog
+npx shadcn@latest add dropdown-menu
+```
+
+Ver todos los componentes disponibles en: https://ui.shadcn.com/docs/components
+
+##  Estructura del Proyecto
+
+```
+proyecto-react-shadcn/
+ src/
+    components/
+       ui/          # Componentes shadcn/ui
+    lib/
+       utils.ts     # Utilidades (cn helper)
+    App.tsx
+    main.tsx
+    index.css        # Estilos globales + Tailwind
+ public/
+ components.json      # Configuración shadcn/ui
+ tailwind.config.js   # Configuración Tailwind
+ vite.config.ts       # Configuración Vite
+ package.json
+```
+
+##  Personalización
+
+### Cambiar el tema
+
+Edita las variables CSS en `src/index.css` para personalizar los colores del tema:
+
+```css
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --primary: 222.2 47.4% 11.2%;
+  /* ... más variables */
+}
+```
+
+### Agregar alias de importación
+
+Los alias ya están configurados en `tsconfig.app.json` y `vite.config.ts`:
+
+```typescript
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
+```
+
+##  Recursos
+
+- [Vite Documentation](https://vite.dev/)
+- [React Documentation](https://react.dev/)
+- [shadcn/ui Documentation](https://ui.shadcn.com/)
+- [Tailwind CSS Documentation](https://tailwindcss.com/)
+
+##  Licencia
+
+MIT
