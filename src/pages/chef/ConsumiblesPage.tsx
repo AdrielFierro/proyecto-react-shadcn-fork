@@ -1,0 +1,419 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '../../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Badge } from '../../components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { Edit, Trash2, User, LogOut, Utensils, Wine, Cake, Home, Search } from 'lucide-react';
+import { consumibles as consumiblesIniciales } from '../../lib/data/mockData';
+import { useAuthStore } from '../../lib/store';
+import type { Consumible } from '../../types';
+
+export default function ConsumiblesPage() {
+  const navigate = useNavigate();
+  const { user, logout } = useAuthStore();
+  const [consumibles, setConsumibles] = useState<Consumible[]>(consumiblesIniciales);
+  const [showDialog, setShowDialog] = useState(false);
+  const [editingConsumible, setEditingConsumible] = useState<Consumible | null>(null);
+  const [formData, setFormData] = useState<Partial<Consumible>>({
+    nombre: '',
+    tipo: 'plato',
+    descripcion: '',
+    precio: 0,
+    disponible: true,
+    categoria: '',
+  });
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const handleCreate = () => {
+    setEditingConsumible(null);
+    setFormData({
+      nombre: '',
+      tipo: 'plato',
+      descripcion: '',
+      precio: 0,
+      disponible: true,
+      categoria: '',
+    });
+    setShowDialog(true);
+  };
+
+  const handleEdit = (consumible: Consumible) => {
+    setEditingConsumible(consumible);
+    setFormData(consumible);
+    setShowDialog(true);
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('¿Estás seguro de eliminar este consumible?')) {
+      setConsumibles(consumibles.filter((c) => c.id !== id));
+    }
+  };
+
+  const handleSave = () => {
+    if (!formData.nombre || !formData.precio) {
+      alert('Complete todos los campos requeridos');
+      return;
+    }
+
+    if (editingConsumible) {
+      setConsumibles(
+        consumibles.map((c) =>
+          c.id === editingConsumible.id ? { ...c, ...formData } : c
+        )
+      );
+    } else {
+      const nuevoConsumible: Consumible = {
+        id: String(Date.now()),
+        nombre: formData.nombre || '',
+        tipo: formData.tipo as 'plato' | 'bebida' | 'postre',
+        descripcion: formData.descripcion || '',
+        precio: formData.precio || 0,
+        disponible: formData.disponible ?? true,
+        categoria: formData.categoria,
+      };
+      setConsumibles([...consumibles, nuevoConsumible]);
+    }
+
+    setShowDialog(false);
+  };
+
+  const platos = consumibles.filter((c) => c.tipo === 'plato');
+  const bebidas = consumibles.filter((c) => c.tipo === 'bebida');
+  const postres = consumibles.filter((c) => c.tipo === 'postre');
+
+  const getIconForTipo = (tipo: string) => {
+    switch (tipo) {
+      case 'plato':
+        return <Utensils className="w-5 h-5" />;
+      case 'bebida':
+        return <Wine className="w-5 h-5" />;
+      case 'postre':
+        return <Cake className="w-5 h-5" />;
+      default:
+        return <Utensils className="w-5 h-5" />;
+    }
+  };
+
+  const renderConsumibleCard = (consumible: Consumible) => (
+    <Card key={consumible.id} className="hover:shadow-lg transition-shadow">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2">
+            <div className="text-gray-600">
+              {getIconForTipo(consumible.tipo)}
+            </div>
+            <CardTitle className="text-base font-semibold">{consumible.nombre}</CardTitle>
+          </div>
+          <Badge className="bg-[#8B6F47] text-white hover:bg-[#8B6F47]">
+            $ {consumible.precio.toFixed(3)}
+          </Badge>
+        </div>
+        {consumible.descripcion && (
+          <CardDescription className="text-sm mt-2">
+            {consumible.descripcion}
+          </CardDescription>
+        )}
+        {consumible.categoria && (
+          <CardDescription className="text-sm">
+            {consumible.categoria}
+          </CardDescription>
+        )}
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="flex items-center justify-between">
+          <Badge className="bg-[#1E3A5F] text-white hover:bg-[#1E3A5F]">
+            {consumible.disponible ? 'Disponible' : 'No disponible'}
+          </Badge>
+          <div className="flex gap-1">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleEdit(consumible)}
+              className="h-8 w-8 p-0"
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleDelete(consumible.id)}
+              className="h-8 w-8 p-0"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <div className="min-h-screen bg-[#E8DED4]">
+      {/* Header Superior Blanco */}
+      <header className="bg-white border-b shadow-sm">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/chef/dashboard')}
+                className="flex items-center gap-2"
+              >
+                <Home className="w-4 h-4" />
+                Inicio
+              </Button>
+              <div className="border-l h-8 border-gray-300"></div>
+              <div>
+                <h1 className="text-base font-semibold text-gray-800">Gestión de Consumibles</h1>
+                <p className="text-xs text-gray-500">Sistema del Chef</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <Badge className="bg-[#8B6F47] text-white hover:bg-[#8B6F47] px-3 py-1.5">
+                <User className="w-3 h-3 mr-1.5" />
+                {user?.nombre || 'Chef Demo'}
+              </Badge>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Cerrar Sesión
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Sección Principal */}
+      <main className="container mx-auto px-6 py-8">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">Administración de Consumibles</h2>
+            <p className="text-sm text-gray-600 mt-1">Gestiona platos, bebidas y postres</p>
+          </div>
+          <Button 
+            onClick={handleCreate}
+            className="bg-[#1E3A5F] hover:bg-[#2A4A7F] text-white"
+          >
+            Nuevo Consumible
+          </Button>
+        </div>
+
+        {/* Buscador */}
+        <div className="mb-6">
+          <div className="relative max-w-2xl">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Input
+              placeholder="Buscar consumibles..."
+              className="pl-10 bg-white h-12"
+            />
+          </div>
+        </div>
+
+        {/* Tabs de Categorías */}
+        <Tabs defaultValue="platos" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6 bg-white">
+            <TabsTrigger value="platos" className="text-base">
+              Platos ({platos.length})
+            </TabsTrigger>
+            <TabsTrigger value="bebidas" className="text-base">
+              Bebidas ({bebidas.length})
+            </TabsTrigger>
+            <TabsTrigger value="postres" className="text-base">
+              Postres ({postres.length})
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Contenido de Platos */}
+          <TabsContent value="platos">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              {platos.map(renderConsumibleCard)}
+            </div>
+            
+            {/* Cards de Disponibles */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="bg-white">
+                <CardContent className="flex flex-col items-center justify-center py-8">
+                  <Utensils className="w-12 h-12 text-gray-600 mb-3" />
+                  <p className="text-3xl font-bold text-gray-800">{platos.length}</p>
+                  <p className="text-sm text-gray-600">Platos Disponibles</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-white">
+                <CardContent className="flex flex-col items-center justify-center py-8">
+                  <Wine className="w-12 h-12 text-gray-600 mb-3" />
+                  <p className="text-3xl font-bold text-gray-800">{bebidas.length}</p>
+                  <p className="text-sm text-gray-600">Bebidas Disponibles</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-white">
+                <CardContent className="flex flex-col items-center justify-center py-8">
+                  <Cake className="w-12 h-12 text-gray-600 mb-3" />
+                  <p className="text-3xl font-bold text-gray-800">{postres.length}</p>
+                  <p className="text-sm text-gray-600">Postres Disponibles</p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Contenido de Bebidas */}
+          <TabsContent value="bebidas">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              {bebidas.map(renderConsumibleCard)}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="bg-white">
+                <CardContent className="flex flex-col items-center justify-center py-8">
+                  <Utensils className="w-12 h-12 text-gray-600 mb-3" />
+                  <p className="text-3xl font-bold text-gray-800">{platos.length}</p>
+                  <p className="text-sm text-gray-600">Platos Disponibles</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-white">
+                <CardContent className="flex flex-col items-center justify-center py-8">
+                  <Wine className="w-12 h-12 text-gray-600 mb-3" />
+                  <p className="text-3xl font-bold text-gray-800">{bebidas.length}</p>
+                  <p className="text-sm text-gray-600">Bebidas Disponibles</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-white">
+                <CardContent className="flex flex-col items-center justify-center py-8">
+                  <Cake className="w-12 h-12 text-gray-600 mb-3" />
+                  <p className="text-3xl font-bold text-gray-800">{postres.length}</p>
+                  <p className="text-sm text-gray-600">Postres Disponibles</p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Contenido de Postres */}
+          <TabsContent value="postres">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              {postres.map(renderConsumibleCard)}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="bg-white">
+                <CardContent className="flex flex-col items-center justify-center py-8">
+                  <Utensils className="w-12 h-12 text-gray-600 mb-3" />
+                  <p className="text-3xl font-bold text-gray-800">{platos.length}</p>
+                  <p className="text-sm text-gray-600">Platos Disponibles</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-white">
+                <CardContent className="flex flex-col items-center justify-center py-8">
+                  <Wine className="w-12 h-12 text-gray-600 mb-3" />
+                  <p className="text-3xl font-bold text-gray-800">{bebidas.length}</p>
+                  <p className="text-sm text-gray-600">Bebidas Disponibles</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-white">
+                <CardContent className="flex flex-col items-center justify-center py-8">
+                  <Cake className="w-12 h-12 text-gray-600 mb-3" />
+                  <p className="text-3xl font-bold text-gray-800">{postres.length}</p>
+                  <p className="text-sm text-gray-600">Postres Disponibles</p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </main>
+
+      {/* Dialog de Crear/Editar */}
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">
+              {editingConsumible ? 'Editar Consumible' : 'Nuevo Consumible'}
+            </DialogTitle>
+            <DialogDescription>
+              {editingConsumible ? 'Modifica los datos del consumible' : 'Completa los datos del nuevo consumible'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="tipo">Tipo de consumible *</Label>
+              <Select
+                value={formData.tipo}
+                onValueChange={(value: 'plato' | 'bebida' | 'postre') =>
+                  setFormData({ ...formData, tipo: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="plato">Plato</SelectItem>
+                  <SelectItem value="bebida">Bebida</SelectItem>
+                  <SelectItem value="postre">Postre</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="nombre">Nombre del consumible *</Label>
+              <Input
+                id="nombre"
+                value={formData.nombre}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, nombre: e.target.value })
+                }
+                placeholder="Ej: Ceviche de Pescado"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="categoria">Categoría del consumible</Label>
+              <Input
+                id="categoria"
+                value={formData.categoria}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, categoria: e.target.value })
+                }
+                placeholder="Ej: Principal, Entrada, etc."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="precio">Precio *</Label>
+              <Input
+                id="precio"
+                type="number"
+                step="0.01"
+                value={formData.precio}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, precio: Number(e.target.value) })
+                }
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSave} className="bg-[#1E3A5F] hover:bg-[#2A4A7F]">
+              {editingConsumible ? 'Guardar Cambios' : 'Crear Consumible'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
