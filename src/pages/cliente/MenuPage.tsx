@@ -3,20 +3,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/ta
 import { Card, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
-import { User, LogOut, Clock, ArrowLeft } from 'lucide-react';
+import { User, LogOut, Clock, ArrowLeft, UtensilsCrossed } from 'lucide-react';
 import { useAuthStore } from '../../lib/store';
-import { consumibles } from '../../lib/data/mockData';
+import { consumibles, sedes } from '../../lib/data/mockData';
 
 const horarios = [
   { id: 'desayuno', nombre: 'Desayuno', horario: '07:00-11:00' },
   { id: 'almuerzo', nombre: 'Almuerzo', horario: '12:00-15:00' },
   { id: 'merienda', nombre: 'Merienda', horario: '16:00-19:00' },
   { id: 'cena', nombre: 'Cena', horario: '20:00-22:00' },
-];
-
-const sedes = [
-  { id: 1, nombre: 'Sede Centro', direccion: 'Calle Principal 123', capacidad: 50 },
-  { id: 2, nombre: 'Sede Norte', direccion: 'Avenida Norte 456', capacidad: 40 },
 ];
 
 export default function MenuPage() {
@@ -35,32 +30,32 @@ export default function MenuPage() {
   return (
     <div className="min-h-screen bg-[#E8DED4]">
       {/* Header */}
-      <header className="bg-white border-b shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+      <header className="bg-white border-b shadow-sm sticky top-0 z-20">
+        <div className="container mx-auto px-4 md:px-6 py-3 md:py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 md:gap-4 min-w-0">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/cliente/dashboard')}
-                className="flex items-center gap-2"
+                className="flex items-center gap-1 md:gap-2 shrink-0"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Inicio
+                <span className="hidden sm:inline">Inicio</span>
               </Button>
-              <div className="border-l h-8 border-gray-300"></div>
-              <div>
-                <h1 className="text-base font-semibold text-gray-800">Menú del Día</h1>
-                <p className="text-xs text-gray-500">Portal del Comensal</p>
+              <div className="hidden sm:block border-l h-8 border-gray-300"></div>
+              <div className="min-w-0">
+                <h1 className="text-sm md:text-base font-semibold text-gray-800 truncate">Menú del Día</h1>
+                <p className="text-xs text-gray-500 hidden sm:block">Portal del Comensal</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
-              <Badge className="bg-[#8B6F47] text-white hover:bg-[#8B6F47] px-3 py-1.5">
+            <div className="flex items-center gap-2 md:gap-3 shrink-0">
+              <Badge className="bg-[#8B6F47] text-white hover:bg-[#8B6F47] px-2 md:px-3 py-1 md:py-1.5 text-xs hidden md:flex">
                 <User className="w-3 h-3 mr-1.5" />
                 {user?.nombre || 'Usuario Comensal'}
               </Badge>
-              <Badge className="bg-[#8B6F47] text-white hover:bg-[#8B6F47] px-3 py-1.5">
+              <Badge className="bg-[#8B6F47] text-white hover:bg-[#8B6F47] px-2 md:px-3 py-1 md:py-1.5 text-xs">
                 COMENSAL
               </Badge>
               
@@ -68,31 +63,33 @@ export default function MenuPage() {
                 variant="ghost"
                 size="sm"
                 onClick={handleLogout}
-                className="text-gray-600 hover:text-gray-800"
+                className="text-gray-600 hover:text-gray-800 px-2 md:px-3"
               >
-                <LogOut className="w-4 h-4 mr-2" />
-                Cerrar Sesión
+                <LogOut className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Cerrar Sesión</span>
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8">
-        {/* Menú Disponible */}
-        <Card className="bg-white border-0 shadow-md mb-6">
-          <CardContent className="p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-2">Menú Disponible</h2>
-            <p className="text-sm text-gray-600 mb-4">Consulta nuestras opciones del día</p>
-            
-            {/* Horarios de Servicio */}
-            <div className="flex items-center gap-2 mb-4">
-              <Clock className="w-5 h-5 text-gray-600" />
-              <span className="font-semibold text-gray-700">Horarios de Servicio</span>
+      <main className="container mx-auto px-4 md:px-6 py-4 md:py-6 space-y-4 md:space-y-6 pb-20 md:pb-8">
+        {/* Título y descripción */}
+        <div className="text-left">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-1">Menú Disponible</h2>
+          <p className="text-sm md:text-base text-gray-600">Consulta nuestras opciones del día</p>
+        </div>
+
+        {/* Horarios de Servicio */}
+        <Card className="bg-white border-0 shadow-md">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex items-center gap-2 mb-3 md:mb-4">
+              <Clock className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
+              <span className="font-semibold text-sm md:text-base text-gray-700">Horarios de Servicio</span>
             </div>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               {horarios.map((horario) => (
-                <div key={horario.id} className="border rounded-lg p-3 bg-gray-50">
+                <div key={horario.id} className="border rounded-lg p-3 bg-gray-50 text-left">
                   <p className="font-semibold text-sm text-gray-800">{horario.nombre}</p>
                   <p className="text-xs text-gray-600 mt-1">{horario.horario}</p>
                 </div>
@@ -101,16 +98,16 @@ export default function MenuPage() {
           </CardContent>
         </Card>
 
-        {/* Sedes Disponibles */}
-        <Card className="bg-white border-0 shadow-md mb-6">
-          <CardContent className="p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Sedes Disponibles</h2>
-            <div className="grid grid-cols-2 gap-4">
+        {/* Comedores Disponibles */}
+        <Card className="bg-white border-0 shadow-md">
+          <CardContent className="p-4 md:p-6">
+            <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-3 md:mb-4 text-left">Comedores Disponibles</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
               {sedes.map((sede) => (
-                <div key={sede.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <h3 className="font-semibold text-gray-800">{sede.nombre}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{sede.direccion}</p>
-                  <p className="text-sm text-gray-600">Capacidad: {sede.capacidad} personas</p>
+                <div key={sede.id} className="border rounded-lg p-3 md:p-4 hover:shadow-md transition-shadow text-left">
+                  <h4 className="font-semibold text-sm md:text-base text-gray-800">{sede.nombre}</h4>
+                  <p className="text-xs md:text-sm text-gray-600 mt-1">{sede.direccion}</p>
+                  <p className="text-xs md:text-sm text-gray-600">Capacidad: {sede.capacidad} personas</p>
                 </div>
               ))}
             </div>
@@ -118,91 +115,175 @@ export default function MenuPage() {
         </Card>
 
         {/* Tabs de Menú */}
-        <Tabs defaultValue="platos" className="mb-8">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="platos">Platos Principales</TabsTrigger>
-            <TabsTrigger value="bebidas">Bebidas</TabsTrigger>
-            <TabsTrigger value="postres">Postres</TabsTrigger>
-          </TabsList>
+        <Tabs defaultValue="platos" className="w-full">
+          <div className="overflow-x-auto [-ms-overflow-style:'none'] [scrollbar-width:'none'] [&::-webkit-scrollbar]:hidden">
+            <TabsList className="grid w-full min-w-max md:min-w-0 grid-cols-3 mb-4 md:mb-6 h-auto">
+              <TabsTrigger 
+                value="platos" 
+                className="text-xs md:text-sm px-3 md:px-4 py-2 md:py-2.5 data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white"
+              >
+                Platos Principales
+              </TabsTrigger>
+              <TabsTrigger 
+                value="bebidas"
+                className="text-xs md:text-sm px-3 md:px-4 py-2 md:py-2.5 data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white"
+              >
+                Bebidas
+              </TabsTrigger>
+              <TabsTrigger 
+                value="postres"
+                className="text-xs md:text-sm px-3 md:px-4 py-2 md:py-2.5 data-[state=active]:bg-[#1E3A5F] data-[state=active]:text-white"
+              >
+                Postres
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="platos">
-            <div className="grid grid-cols-3 gap-4">
-              {platos.map((plato) => (
-                <Card key={plato.id} className="bg-white border-0 shadow-md">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold text-gray-800">{plato.nombre}</h3>
-                      <Badge className="bg-[#1E3A5F] text-white hover:bg-[#1E3A5F]">
-                        ${plato.precio.toFixed(3)}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-3">{plato.descripcion}</p>
-                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-                      Disponible
-                    </Badge>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {platos.length === 0 ? (
+              <div className="text-center text-sm text-gray-500 py-10 md:py-12 bg-white rounded-lg border">
+                <UtensilsCrossed className="w-12 h-12 md:w-16 md:h-16 text-gray-300 mx-auto mb-3" />
+                <p>No hay platos disponibles en esta categoría.</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {platos.map((plato) => (
+                  <Card key={plato.id} className="h-full flex flex-col bg-white border-0 shadow-md rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
+                    {plato.imagen && (
+                      <div className="w-full aspect-[4/3] overflow-hidden bg-gray-100">
+                        <img 
+                          src={plato.imagen} 
+                          alt={plato.nombre}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <CardContent className="flex flex-col gap-2 p-4 flex-1">
+                      <div className="flex justify-between items-start gap-2">
+                        <h3 className="font-semibold text-sm md:text-base text-gray-800 text-left flex-1">{plato.nombre}</h3>
+                        <Badge className="bg-[#1E3A5F] text-white hover:bg-[#1E3A5F] shrink-0 text-xs">
+                          ${plato.precio.toFixed(0)}
+                        </Badge>
+                      </div>
+                      <p className="text-xs md:text-sm text-gray-600 text-left line-clamp-2">{plato.descripcion}</p>
+                      {plato.categoria && (
+                        <p className="text-xs text-gray-500 text-left">{plato.categoria}</p>
+                      )}
+                      <div className="mt-auto pt-2">
+                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100 text-xs">
+                          Disponible
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="bebidas">
-            <div className="grid grid-cols-3 gap-4">
-              {bebidas.map((bebida) => (
-                <Card key={bebida.id} className="bg-white border-0 shadow-md">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold text-gray-800">{bebida.nombre}</h3>
-                      <Badge className="bg-[#1E3A5F] text-white hover:bg-[#1E3A5F]">
-                        ${bebida.precio.toFixed(3)}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-3">{bebida.descripcion}</p>
-                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-                      Disponible
-                    </Badge>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {bebidas.length === 0 ? (
+              <div className="text-center text-sm text-gray-500 py-10 md:py-12 bg-white rounded-lg border">
+                <UtensilsCrossed className="w-12 h-12 md:w-16 md:h-16 text-gray-300 mx-auto mb-3" />
+                <p>No hay bebidas disponibles en esta categoría.</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {bebidas.map((bebida) => (
+                  <Card key={bebida.id} className="h-full flex flex-col bg-white border-0 shadow-md rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
+                    {bebida.imagen && (
+                      <div className="w-full aspect-[4/3] overflow-hidden bg-gray-100">
+                        <img 
+                          src={bebida.imagen} 
+                          alt={bebida.nombre}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <CardContent className="flex flex-col gap-2 p-4 flex-1">
+                      <div className="flex justify-between items-start gap-2">
+                        <h3 className="font-semibold text-sm md:text-base text-gray-800 text-left flex-1">{bebida.nombre}</h3>
+                        <Badge className="bg-[#1E3A5F] text-white hover:bg-[#1E3A5F] shrink-0 text-xs">
+                          ${bebida.precio.toFixed(0)}
+                        </Badge>
+                      </div>
+                      <p className="text-xs md:text-sm text-gray-600 text-left line-clamp-2">{bebida.descripcion}</p>
+                      <div className="mt-auto pt-2">
+                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100 text-xs">
+                          Disponible
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="postres">
-            <div className="grid grid-cols-3 gap-4">
-              {postres.map((postre) => (
-                <Card key={postre.id} className="bg-white border-0 shadow-md">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold text-gray-800">{postre.nombre}</h3>
-                      <Badge className="bg-[#1E3A5F] text-white hover:bg-[#1E3A5F]">
-                        ${postre.precio.toFixed(3)}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-3">{postre.descripcion}</p>
-                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-                      Disponible
-                    </Badge>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {postres.length === 0 ? (
+              <div className="text-center text-sm text-gray-500 py-10 md:py-12 bg-white rounded-lg border">
+                <UtensilsCrossed className="w-12 h-12 md:w-16 md:h-16 text-gray-300 mx-auto mb-3" />
+                <p>No hay postres disponibles en esta categoría.</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {postres.map((postre) => (
+                  <Card key={postre.id} className="h-full flex flex-col bg-white border-0 shadow-md rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
+                    {postre.imagen && (
+                      <div className="w-full aspect-[4/3] overflow-hidden bg-gray-100">
+                        <img 
+                          src={postre.imagen} 
+                          alt={postre.nombre}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <CardContent className="flex flex-col gap-2 p-4 flex-1">
+                      <div className="flex justify-between items-start gap-2">
+                        <h3 className="font-semibold text-sm md:text-base text-gray-800 text-left flex-1">{postre.nombre}</h3>
+                        <Badge className="bg-[#1E3A5F] text-white hover:bg-[#1E3A5F] shrink-0 text-xs">
+                          ${postre.precio.toFixed(0)}
+                        </Badge>
+                      </div>
+                      <p className="text-xs md:text-sm text-gray-600 text-left line-clamp-2">{postre.descripcion}</p>
+                      <div className="mt-auto pt-2">
+                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100 text-xs">
+                          Disponible
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
 
-        {/* Sección final - Hacer Reserva */}
-        <Card className="bg-white border-0 shadow-md">
-          <CardContent className="p-8 text-center">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">¿Listo para hacer tu reserva?</h2>
-            <p className="text-gray-600 mb-6">Selecciona tu sede, horario y menú favorito</p>
+        {/* Sección final - Hacer Reserva (Desktop) */}
+        <Card className="bg-white border-0 shadow-md hidden md:block">
+          <CardContent className="p-6 md:p-8 text-center">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">¿Listo para hacer tu reserva?</h2>
+            <p className="text-sm md:text-base text-gray-600 mb-4 md:mb-6">Selecciona tu sede, horario y menú favorito</p>
             <Button 
               onClick={() => navigate('/cliente/nueva-reserva')}
-              className="bg-[#1E3A5F] hover:bg-[#2A4A7F] text-white px-8 py-6 text-lg"
+              className="bg-[#1E3A5F] hover:bg-[#2A4A7F] text-white px-6 md:px-8 py-5 md:py-6 text-base md:text-lg"
             >
               Hacer Reserva
             </Button>
           </CardContent>
         </Card>
       </main>
+
+      {/* CTA Sticky Mobile */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-t p-3 shadow-lg">
+        <Button 
+          onClick={() => navigate('/cliente/nueva-reserva')}
+          className="w-full bg-[#1E3A5F] hover:bg-[#2A4A7F] text-white py-6 text-base font-semibold"
+        >
+          Hacer Reserva
+        </Button>
+      </div>
     </div>
   );
 }

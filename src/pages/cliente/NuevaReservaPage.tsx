@@ -62,7 +62,7 @@ export default function NuevaReservaPage() {
       usuarioId: user.id,
       sedeId: sedeSeleccionada.id,
       fecha: fechaSeleccionada,
-      estado: 'pendiente',
+      estado: 'ACTIVA', 
       items: [],
       total: costoReserva,
       fechaCreacion: new Date().toISOString(),

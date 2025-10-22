@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User, Reserva, TurnoHorario } from '../types';
+import type { User, Reserva, TurnoHorario, ReservaStatus } from '../types';
 
 interface AuthState {
   user: User | null;
@@ -62,6 +62,23 @@ interface ReservaState {
   liberarHorario: (slot: TurnoHorario) => void;
 }
 
+// Función para migrar estados inválidos a ACTIVA
+const migrarEstadosReservas = (reservas: Reserva[]): Reserva[] => {
+  return reservas.map((reserva) => {
+    // Si el estado no es válido (ej: "pendiente"), convertir a ACTIVA
+    const estadosValidos: ReservaStatus[] = ['ACTIVA', 'FINALIZADA', 'CANCELADA'];
+    const estadoNormalizado = reserva.estado?.toUpperCase() as ReservaStatus;
+    
+    if (!estadosValidos.includes(estadoNormalizado)) {
+      console.warn(`Migrando reserva ${reserva.id} de estado "${reserva.estado}" a "ACTIVA"`);
+      return { ...reserva, estado: 'ACTIVA' };
+    }
+    
+    // Asegurar que el estado esté en mayúsculas
+    return { ...reserva, estado: estadoNormalizado };
+  });
+};
+
 export const useReservaStore = create<ReservaState>()(
   persist(
     (set, get) => ({
@@ -73,13 +90,19 @@ export const useReservaStore = create<ReservaState>()(
       
       agregarReserva: (reserva) => {
         set((state) => {
-          const nuevasReservas = [...state.reservas, reserva];
+          // Asegurar que el estado sea ACTIVA al crear
+          const nuevaReserva: Reserva = {
+            ...reserva,
+            estado: 'ACTIVA', // Estado inicial siempre ACTIVA
+          };
+          
+          const nuevasReservas = [...state.reservas, nuevaReserva];
           const newOccupancy = { ...state.slotOccupancy };
           
           // Si tiene slotId, incrementar ocupación
-          if (reserva.slotId) {
-            const currentCount = newOccupancy[reserva.slotId] || 0;
-            newOccupancy[reserva.slotId] = currentCount + 1;
+          if (nuevaReserva.slotId) {
+            const currentCount = newOccupancy[nuevaReserva.slotId] || 0;
+            newOccupancy[nuevaReserva.slotId] = currentCount + 1;
           }
           
           return { 
@@ -90,11 +113,29 @@ export const useReservaStore = create<ReservaState>()(
       },
       
       actualizarReserva: (id, reservaUpdate) => {
-        set((state) => ({
-          reservas: state.reservas.map((r) =>
-            r.id === id ? { ...r, ...reservaUpdate } : r
-          ),
-        }));
+        set((state) => {
+          const reservaAnterior = state.reservas.find((r) => r.id === id);
+          const newOccupancy = { ...state.slotOccupancy };
+          
+          // Si se está cancelando y tiene slotId, liberar el horario
+          if (
+            reservaUpdate.estado === 'CANCELADA' &&
+            reservaAnterior?.estado === 'ACTIVA' &&
+            reservaAnterior.slotId
+          ) {
+            const currentCount = newOccupancy[reservaAnterior.slotId] || 0;
+            if (currentCount > 0) {
+              newOccupancy[reservaAnterior.slotId] = currentCount - 1;
+            }
+          }
+          
+          return {
+            reservas: state.reservas.map((r) =>
+              r.id === id ? { ...r, ...reservaUpdate } : r
+            ),
+            slotOccupancy: newOccupancy,
+          };
+        });
       },
       
       obtenerReservaPorId: (id) => {
@@ -107,7 +148,7 @@ export const useReservaStore = create<ReservaState>()(
           const newOccupancy = { ...state.slotOccupancy };
           
           // Si tiene slotId, liberar el horario
-          if (reserva?.slotId) {
+          if (reserva?.slotId && reserva.estado === 'ACTIVA') {
             const currentCount = newOccupancy[reserva.slotId] || 0;
             if (currentCount > 0) {
               newOccupancy[reserva.slotId] = currentCount - 1;
@@ -116,7 +157,7 @@ export const useReservaStore = create<ReservaState>()(
           
           return {
             reservas: state.reservas.map((r) =>
-              r.id === id ? { ...r, estado: 'cancelada' as const } : r
+              r.id === id ? { ...r, estado: 'CANCELADA' as const } : r
             ),
             slotOccupancy: newOccupancy
           };
@@ -157,6 +198,22 @@ export const useReservaStore = create<ReservaState>()(
     }),
     {
       name: 'reserva-storage',
+      // Migración automática al cargar desde localStorage
+      onRehydrateStorage: () => (state) => {
+        if (state?.reservas) {
+          const reservasMigradas = migrarEstadosReservas(state.reservas);
+          
+          // Si hubo cambios, actualizar el estado
+          const huboCambios = reservasMigradas.some(
+            (r, i) => r.estado !== state.reservas[i]?.estado
+          );
+          
+          if (huboCambios) {
+            state.reservas = reservasMigradas;
+            console.log('✅ Reservas migradas exitosamente');
+          }
+        }
+      },
     }
   )
 );

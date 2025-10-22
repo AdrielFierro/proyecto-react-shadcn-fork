@@ -31,14 +31,14 @@ export interface Turno {
 }
 
 export interface TurnoHorario {
-  id: string;              // ej: "slot-2025-10-23_sede-1_07:00-08:00"
-  venueId: string;         // sede seleccionada
-  date: string;            // "YYYY-MM-DD"
+  id: string;
+  venueId: string;
+  date: string;
   meal: Meal;
-  start: string;           // "HH:mm"
-  end: string;             // "HH:mm"
-  capacity: number;        // capacidad de la sede
-  reservedCount: number;   // ocupación actual del slot
+  start: string;
+  end: string;
+  capacity: number;
+  reservedCount: number;
 }
 
 export interface Consumible {
@@ -58,6 +58,8 @@ export interface ItemPedido {
   cantidad: number;
 }
 
+export type ReservaStatus = 'ACTIVA' | 'FINALIZADA' | 'CANCELADA';
+
 export interface Reserva {
   id: string;
   usuarioId: string;
@@ -67,17 +69,30 @@ export interface Reserva {
   turnoId?: string;
   turno?: Turno;
   fecha: string;
-  estado: 'pendiente' | 'confirmada' | 'pagada' | 'cancelada';
+  estado: ReservaStatus;
   items: ItemPedido[];
   total: number;
   metodoPago?: 'efectivo' | 'tarjeta' | 'transferencia';
   fechaCreacion: string;
-  // Nuevos campos para slots
   meal?: Meal;
   slotId?: string;
   slotStart?: string;
   slotEnd?: string;
 }
+
+// Mapeo de etiquetas para mostrar en UI
+export const RESERVA_STATUS_LABEL: Record<ReservaStatus, string> = {
+  ACTIVA: 'Activa',
+  FINALIZADA: 'Finalizada',
+  CANCELADA: 'Cancelada',
+};
+
+// Clases de Tailwind para cada estado (badges)
+export const RESERVA_STATUS_CLASS: Record<ReservaStatus, string> = {
+  ACTIVA: 'bg-green-100 text-green-700 hover:bg-green-100',
+  FINALIZADA: 'bg-sky-100 text-sky-700 hover:bg-sky-100',
+  CANCELADA: 'bg-red-100 text-red-700 hover:bg-red-100',
+};
 
 export interface MenuDia {
   id: string;
@@ -90,9 +105,9 @@ export interface MenuDia {
 
 export interface MenuSemanal {
   sedeId: string;
-  semana: string; // ISO week date
+  semana: string;
   dias: {
-    [dia: string]: { // 'lunes', 'martes', etc.
+    [dia: string]: {
       [turnoId: string]: {
         platoIds: string[];
         bebidaIds: string[];
