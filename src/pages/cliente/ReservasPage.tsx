@@ -82,7 +82,7 @@ export default function ReservasPage() {
     return `${dias[date.getDay()]}, ${date.getDate()} de ${meses[date.getMonth()]} de ${date.getFullYear()}`;
   };
 
-  const puedeModificarOCancelar = (reserva: Reserva): boolean => {
+  const puedeCancelar = (reserva: Reserva): boolean => {
     if (reserva.estado !== 'ACTIVA') return false;
     
     // Verificar si la reserva es futura
@@ -95,7 +95,7 @@ export default function ReservasPage() {
       fechaReserva.setHours(hours, minutes, 0, 0);
     }
     
-    // Permitir cancelar/modificar si la reserva es futura
+    // Permitir cancelar si la reserva es futura
     return fechaReserva > ahora;
   };
 
@@ -205,7 +205,7 @@ export default function ReservasPage() {
             {misReservas.map((reserva) => {
               const sede = getSede(reserva.sedeId);
               const turno = getTurno(reserva.turnoId);
-              const mostrarBotones = puedeModificarOCancelar(reserva);
+              const mostrarBotonCancelar = puedeCancelar(reserva);
               
               return (
                 <Card key={reserva.id} className="bg-white border-0 shadow-md hover:shadow-lg transition-shadow h-full flex flex-col">
@@ -264,29 +264,21 @@ export default function ReservasPage() {
                       )}
                     </div>
 
-                    {/* Botones de Acción - Solo para reservas ACTIVAS futuras */}
-                    {mostrarBotones && (
-                      <div className="flex flex-col sm:flex-row gap-2 mt-auto">
+                    {/* Botón Cancelar - Solo para reservas ACTIVAS futuras */}
+                    {mostrarBotonCancelar && (
+                      <div className="mt-auto">
                         <Button
                           variant="destructive"
-                          className="flex-1 bg-red-500 hover:bg-red-600 text-xs md:text-sm w-full sm:w-auto"
+                          className="w-full bg-red-500 hover:bg-red-600 text-xs md:text-sm"
                           onClick={() => handleCancelar(reserva)}
                           aria-label={`Cancelar reserva ${reserva.id}`}
                         >
-                          Cancelar
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50 text-xs md:text-sm w-full sm:w-auto"
-                          onClick={() => handleModificar(reserva)}
-                          aria-label={`Modificar reserva ${reserva.id}`}
-                        >
-                          Modificar
+                          Cancelar Reserva
                         </Button>
                       </div>
                     )}
 
-                    {/* Mensajes para reservas no modificables */}
+                    {/* Mensajes para reservas no cancelables */}
                     {reserva.estado === 'FINALIZADA' && (
                       <div className="mt-auto pt-3 text-center">
                         <p className="text-xs text-gray-500">Esta reserva ya fue completada</p>
@@ -295,6 +287,11 @@ export default function ReservasPage() {
                     {reserva.estado === 'CANCELADA' && (
                       <div className="mt-auto pt-3 text-center">
                         <p className="text-xs text-gray-500">Esta reserva fue cancelada</p>
+                      </div>
+                    )}
+                    {reserva.estado === 'ACTIVA' && !mostrarBotonCancelar && (
+                      <div className="mt-auto pt-3 text-center">
+                        <p className="text-xs text-gray-500">No se puede cancelar una reserva pasada</p>
                       </div>
                     )}
                   </CardContent>
@@ -318,12 +315,13 @@ export default function ReservasPage() {
                 </h3>
                 <div className="text-xs md:text-sm text-amber-800 space-y-2">
                   <div>
-                    <p className="font-semibold mb-1">Políticas de Reserva</p>
+                    <p className="font-semibold mb-1">Políticas de Cancelación</p>
                     <ul className="list-disc list-inside space-y-1 text-amber-700">
-                      <li>El pago se realiza al momento de la confirmación</li>
+                      <li>Solo puedes cancelar reservas activas futuras</li>
                       <li>Cancelaciones gratuitas hasta 24 horas antes</li>
                       <li>Después de 24 horas se cobra el 50% del valor de la reserva</li>
                       <li>El costo de reserva se devuelve al momento de tu asistencia</li>
+                      <li>Las reservas pasadas no se pueden cancelar</li>
                     </ul>
                   </div>
                 </div>
