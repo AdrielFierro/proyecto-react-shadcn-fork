@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User, Reserva } from '../types';
+import type { User, Reserva, TurnoHorario } from '../types';
 
 interface AuthState {
   user: User | null;
@@ -51,10 +51,15 @@ export const useAuthStore = create<AuthState>()(
 interface ReservaState {
   reservas: Reserva[];
   reservaActual: Reserva | null;
+  slotOccupancy: Record<string, number>;
   setReservaActual: (reserva: Reserva | null) => void;
   agregarReserva: (reserva: Reserva) => void;
   actualizarReserva: (id: string, reserva: Partial<Reserva>) => void;
   obtenerReservaPorId: (id: string) => Reserva | undefined;
+  cancelarReserva: (id: string) => void;
+  getSlotCount: (slotId: string) => number;
+  reservarHorario: (slot: TurnoHorario) => boolean;
+  liberarHorario: (slot: TurnoHorario) => void;
 }
 
 export const useReservaStore = create<ReservaState>()(
@@ -62,10 +67,28 @@ export const useReservaStore = create<ReservaState>()(
     (set, get) => ({
       reservas: [],
       reservaActual: null,
+      slotOccupancy: {},
+      
       setReservaActual: (reserva) => set({ reservaActual: reserva }),
+      
       agregarReserva: (reserva) => {
-        set((state) => ({ reservas: [...state.reservas, reserva] }));
+        set((state) => {
+          const nuevasReservas = [...state.reservas, reserva];
+          const newOccupancy = { ...state.slotOccupancy };
+          
+          // Si tiene slotId, incrementar ocupación
+          if (reserva.slotId) {
+            const currentCount = newOccupancy[reserva.slotId] || 0;
+            newOccupancy[reserva.slotId] = currentCount + 1;
+          }
+          
+          return { 
+            reservas: nuevasReservas,
+            slotOccupancy: newOccupancy
+          };
+        });
       },
+      
       actualizarReserva: (id, reservaUpdate) => {
         set((state) => ({
           reservas: state.reservas.map((r) =>
@@ -73,8 +96,63 @@ export const useReservaStore = create<ReservaState>()(
           ),
         }));
       },
+      
       obtenerReservaPorId: (id) => {
         return get().reservas.find((r) => r.id === id);
+      },
+      
+      cancelarReserva: (id) => {
+        set((state) => {
+          const reserva = state.reservas.find((r) => r.id === id);
+          const newOccupancy = { ...state.slotOccupancy };
+          
+          // Si tiene slotId, liberar el horario
+          if (reserva?.slotId) {
+            const currentCount = newOccupancy[reserva.slotId] || 0;
+            if (currentCount > 0) {
+              newOccupancy[reserva.slotId] = currentCount - 1;
+            }
+          }
+          
+          return {
+            reservas: state.reservas.map((r) =>
+              r.id === id ? { ...r, estado: 'cancelada' as const } : r
+            ),
+            slotOccupancy: newOccupancy
+          };
+        });
+      },
+      
+      getSlotCount: (slotId) => {
+        return get().slotOccupancy[slotId] || 0;
+      },
+      
+      reservarHorario: (slot) => {
+        const currentCount = get().getSlotCount(slot.id);
+        if (currentCount >= slot.capacity) {
+          return false; // No hay cupo
+        }
+        
+        set((state) => ({
+          slotOccupancy: {
+            ...state.slotOccupancy,
+            [slot.id]: currentCount + 1,
+          },
+        }));
+        
+        return true;
+      },
+      
+      liberarHorario: (slot) => {
+        const currentCount = get().getSlotCount(slot.id);
+        if (currentCount > 0) {
+          set((state) => ({
+            slotOccupancy: {
+              ...state.slotOccupancy,
+              [slot.id]: currentCount - 1,
+            },
+          }));
+        }
       },
     }),
     {

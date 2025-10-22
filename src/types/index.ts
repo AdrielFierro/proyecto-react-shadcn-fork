@@ -16,6 +16,8 @@ export interface Sede {
   imagen?: string;
 }
 
+export type Meal = 'Desayuno' | 'Almuerzo' | 'Merienda' | 'Cena';
+
 export interface Turno {
   id: string;
   nombre: string;
@@ -26,6 +28,17 @@ export interface Turno {
   fecha: string;
   meal: 'desayuno' | 'almuerzo' | 'merienda' | 'cena';
   reservedCount: number;
+}
+
+export interface TurnoHorario {
+  id: string;              // ej: "slot-2025-10-23_sede-1_07:00-08:00"
+  venueId: string;         // sede seleccionada
+  date: string;            // "YYYY-MM-DD"
+  meal: Meal;
+  start: string;           // "HH:mm"
+  end: string;             // "HH:mm"
+  capacity: number;        // capacidad de la sede
+  reservedCount: number;   // ocupación actual del slot
 }
 
 export interface Consumible {
@@ -51,7 +64,7 @@ export interface Reserva {
   usuario?: User;
   sedeId: string;
   sede?: Sede;
-  turnoId: string;
+  turnoId?: string;
   turno?: Turno;
   fecha: string;
   estado: 'pendiente' | 'confirmada' | 'pagada' | 'cancelada';
@@ -59,6 +72,11 @@ export interface Reserva {
   total: number;
   metodoPago?: 'efectivo' | 'tarjeta' | 'transferencia';
   fechaCreacion: string;
+  // Nuevos campos para slots
+  meal?: Meal;
+  slotId?: string;
+  slotStart?: string;
+  slotEnd?: string;
 }
 
 export interface MenuDia {

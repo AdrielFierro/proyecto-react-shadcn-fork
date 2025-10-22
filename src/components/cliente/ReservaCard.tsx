@@ -3,7 +3,7 @@ import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Calendar, Clock, MapPin, DollarSign } from 'lucide-react';
 import type { Reserva } from '../../types';
-import { sedes, turnos } from '../../lib/data/mockData';
+import { sedes, turnos } from '../../lib/data/';
 
 interface ReservaCardProps {
   reserva: Reserva;

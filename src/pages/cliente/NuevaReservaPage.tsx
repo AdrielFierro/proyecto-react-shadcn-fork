@@ -5,39 +5,35 @@ import { Badge } from '../../components/ui/badge';
 import { Card, CardContent } from '../../components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 import Stepper from '../../components/cliente/Stepper';
+import SlotCard from '../../components/cliente/SlotCard';
 import { useAuthStore, useReservaStore } from '../../lib/store';
-import { sedes, turnos } from '../../lib/data/mockData';
-import { User, LogOut, ArrowLeft, Calendar as CalendarIcon, MapPin, Clock, Check, AlertCircle, BellOff, Users } from 'lucide-react';
-import type { Sede, Turno, Reserva } from '../../types';
-import TurnoCard from '../../components/cliente/TurnoCard';
+import { sedes } from '../../lib/data/mockData';
+import { User, LogOut, ArrowLeft, Calendar as CalendarIcon, MapPin, Clock, Check, AlertCircle, BellOff } from 'lucide-react';
+import type { Sede, Reserva, Meal, TurnoHorario } from '../../types';
+import { buildSlotsForMeal, getMealLabel } from '../../lib/utils/slots';
 
 const steps = [
   { id: 1, nombre: 'Sede', descripcion: 'Selecciona la sede' },
   { id: 2, nombre: 'Fecha', descripcion: 'Elige la fecha' },
-  { id: 3, nombre: 'Turno', descripcion: 'Selecciona el turno' },
+  { id: 3, nombre: 'Turno', descripcion: 'Selecciona el turno y horario' },
   { id: 4, nombre: 'Confirmar', descripcion: 'Revisa y confirma' },
 ];
+
+const MEALS: Meal[] = ['Desayuno', 'Almuerzo', 'Merienda', 'Cena'];
 
 export default function NuevaReservaPage() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const agregarReserva = useReservaStore((state) => state.agregarReserva);
+  const { agregarReserva, getSlotCount } = useReservaStore();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [sedeSeleccionada, setSedeSeleccionada] = useState<Sede | null>(null);
   const [fechaSeleccionada, setFechaSeleccionada] = useState<string>('');
-  const [turnoSeleccionado, setTurnoSeleccionado] = useState<Turno | null>(null);
-  const [horaEspecifica, setHoraEspecifica] = useState<string>('');
+  const [mealSeleccionado, setMealSeleccionado] = useState<Meal | null>(null);
+  const [slotSeleccionado, setSlotSeleccionado] = useState<TurnoHorario | null>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [errorMessage, _setErrorMessage] = useState('');
-
-  const horariosDisponibles: Record<string, string[]> = {
-    '1': ['07:00 AM', '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM'],
-    '2': ['12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM'],
-    '3': ['04:00 PM', '05:00 PM', '06:00 PM', '07:00 PM'],
-    '4': ['08:00 PM', '09:00 PM', '10:00 PM'],
-  };
 
   const handleLogout = () => {
     logout();
@@ -57,7 +53,7 @@ export default function NuevaReservaPage() {
   };
 
   const handleConfirmar = () => {
-    if (!user || !sedeSeleccionada || !fechaSeleccionada || !turnoSeleccionado) return;
+    if (!user || !sedeSeleccionada || !fechaSeleccionada || !slotSeleccionado) return;
 
     const costoReserva = 2000;
     
@@ -65,12 +61,15 @@ export default function NuevaReservaPage() {
       id: `R${String(Date.now()).slice(-3)}`,
       usuarioId: user.id,
       sedeId: sedeSeleccionada.id,
-      turnoId: turnoSeleccionado.id,
       fecha: fechaSeleccionada,
       estado: 'pendiente',
       items: [],
       total: costoReserva,
       fechaCreacion: new Date().toISOString(),
+      meal: slotSeleccionado.meal,
+      slotId: slotSeleccionado.id,
+      slotStart: slotSeleccionado.start,
+      slotEnd: slotSeleccionado.end,
     };
 
     agregarReserva(nuevaReserva);
@@ -84,7 +83,7 @@ export default function NuevaReservaPage() {
       case 2:
         return !!fechaSeleccionada;
       case 3:
-        return !!turnoSeleccionado && !!horaEspecifica;
+        return !!mealSeleccionado && !!slotSeleccionado;
       case 4:
         return true;
       default:
@@ -92,7 +91,7 @@ export default function NuevaReservaPage() {
     }
   };
 
-  // Generar fechas disponibles (próximos 14 días) - Construcción local
+  // Generar fechas disponibles (próximos 14 días)
   const generarFechasDisponibles = () => {
     const fechas: Date[] = [];
     const hoy = new Date();
@@ -108,7 +107,6 @@ export default function NuevaReservaPage() {
 
   const fechasDisponibles = generarFechasDisponibles();
 
-  // Función para convertir Date a string YYYY-MM-DD
   const dateToString = (date: Date): string => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -116,17 +114,28 @@ export default function NuevaReservaPage() {
     return `${year}-${month}-${day}`;
   };
 
-  // Normalizar today
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Filtrar turnos disponibles según sede y fecha seleccionadas
-  const turnosFiltrados = sedeSeleccionada && fechaSeleccionada
-    ? turnos.filter(t => 
-        t.sedeId === sedeSeleccionada.id && 
-        t.fecha === fechaSeleccionada
-      )
+  // Generar slots cuando se selecciona meal
+  const slots = mealSeleccionado && sedeSeleccionada && fechaSeleccionada
+    ? buildSlotsForMeal({
+        dateYmd: fechaSeleccionada,
+        venueId: sedeSeleccionada.id,
+        meal: mealSeleccionado,
+        venueCapacity: sedeSeleccionada.capacidad,
+      })
     : [];
+
+  // Aplicar condición especial: Comedor Sur - Desayuno agotado
+  const slotsConOcupacion = slots.map(slot => {
+    const baseCount = getSlotCount(slot.id);
+    // Si es Comedor Sur (id: '3') y Desayuno, marcar como lleno
+    if (sedeSeleccionada?.id === '3' && slot.meal === 'Desayuno') {
+      return { ...slot, reservedCount: slot.capacity };
+    }
+    return { ...slot, reservedCount: baseCount };
+  });
 
   return (
     <div className="min-h-screen bg-[#E8DED4]">
@@ -271,10 +280,10 @@ export default function NuevaReservaPage() {
             </div>
           )}
 
-          {/* Paso 3: Seleccionar Turno */}
+          {/* Paso 3: Seleccionar Meal y Horario */}
           {currentStep === 3 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-[#1E3A5F]">Selecciona un Turno</h2>
+              <h2 className="text-2xl font-bold text-[#1E3A5F]">Selecciona Turno y Horario</h2>
               
               <div className="bg-blue-50 border border-[#1E3A5F] rounded-lg p-4 mb-6">
                 <div className="flex items-center gap-2 text-[#1E3A5F] text-sm">
@@ -296,27 +305,53 @@ export default function NuevaReservaPage() {
                 </div>
               </div>
 
-              {turnosFiltrados.length === 0 ? (
-                <div className="text-center py-12">
-                  <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">No hay turnos disponibles para esta fecha y sede</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {turnosFiltrados.map((turno) => (
-                    <TurnoCard
-                      key={turno.id}
-                      turno={turno}
-                      isSelected={turnoSeleccionado?.id === turno.id}
-                      onSelect={(t) => {
-                        setTurnoSeleccionado(t);
-                        setHoraEspecifica('');
+              {/* Selección de Meal */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">1. Selecciona el tipo de comida</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {MEALS.map((meal) => (
+                    <button
+                      key={meal}
+                      onClick={() => {
+                        setMealSeleccionado(meal);
+                        setSlotSeleccionado(null);
                       }}
-                      horariosDisponibles={horariosDisponibles[turno.id]}
-                      horaEspecifica={horaEspecifica}
-                      onSelectHora={setHoraEspecifica}
-                    />
+                      className={`p-4 rounded-lg border-2 transition-all font-medium ${
+                        mealSeleccionado === meal
+                          ? 'border-[#1E3A5F] bg-[#1E3A5F] text-white'
+                          : 'border-gray-200 hover:border-[#1E3A5F] bg-white text-gray-700'
+                      }`}
+                    >
+                      {getMealLabel(meal)}
+                    </button>
                   ))}
+                </div>
+              </div>
+
+              {/* Selección de Horario (Slots) */}
+              {mealSeleccionado && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    2. Selecciona un horario para {getMealLabel(mealSeleccionado)}
+                  </h3>
+                  {slotsConOcupacion.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500">No hay horarios disponibles</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {slotsConOcupacion.map((slot) => (
+                        <SlotCard
+                          key={slot.id}
+                          slot={slot}
+                          isSelected={slotSeleccionado?.id === slot.id}
+                          onSelect={setSlotSeleccionado}
+                          occupiedCount={slot.reservedCount}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -324,59 +359,78 @@ export default function NuevaReservaPage() {
 
           {/* Paso 4: Confirmación */}
           {currentStep === 4 && (
-            <div className="flex justify-center">
-              <div className="w-full max-w-2xl">
-                <h2 className="text-xl font-bold text-gray-800 mb-4">Confirmar Reserva</h2>
-                
-                <Card className="border border-gray-300">
-                  <CardContent className="p-5">
-                    <h3 className="text-base font-semibold text-gray-800 mb-3 pb-3 border-b">Detalles de la Reserva</h3>
-                    
-                    <div className="grid grid-cols-[1fr_auto] gap-4">
-                      {/* Columna izquierda - Detalles compactos */}
-                      <div className="space-y-0.5 text-sm">
-                        <p className="font-medium text-gray-900">{sedeSeleccionada?.nombre}</p>
-                        <p className="text-gray-600 text-xs">{sedeSeleccionada?.direccion}</p>
-                        <p className="text-gray-900 text-xs pt-1">
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-[#1E3A5F]">Confirmar Reserva</h2>
+              
+              <Card className="border border-gray-300">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-3 border-b">
+                    Detalles de la Reserva
+                  </h3>
+                  
+                  <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 items-start">
+                    <div className="space-y-3 text-left">
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">Sede</p>
+                        <p className="font-semibold text-gray-900">{sedeSeleccionada?.nombre}</p>
+                        <p className="text-sm text-gray-600">{sedeSeleccionada?.direccion}</p>
+                      </div>
+                      
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">Fecha</p>
+                        <p className="font-semibold text-gray-900">
                           {fechaSeleccionada && (() => {
                             const [year, month, day] = fechaSeleccionada.split('-').map(Number);
                             const fecha = new Date(year, month - 1, day);
                             return fecha.toLocaleDateString('es-ES', { 
+                              weekday: 'long',
                               day: '2-digit',
-                              month: '2-digit',
+                              month: 'long',
                               year: 'numeric'
                             });
-                          })()} - {turnoSeleccionado?.nombre}
+                          })()}
                         </p>
-                        <p className="text-gray-600 text-xs">{horaEspecifica}</p>
                       </div>
-
-                      {/* Columna derecha - Atención compacta */}
-                      <div className="flex flex-col items-center justify-start bg-gray-100 rounded-md px-4 py-3 w-[180px]">
-                        <AlertCircle className="w-6 h-6 text-gray-500 mb-1.5" />
-                        <p className="text-[10px] text-center text-gray-600 leading-tight">
-                          Se te devolverá el costo de la reserva al momento de su asistencia
+                      
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">Turno</p>
+                        <p className="font-semibold text-gray-900">{mealSeleccionado && getMealLabel(mealSeleccionado)}</p>
+                      </div>
+                      
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">Horario</p>
+                        <p className="font-semibold text-gray-900">
+                          {slotSeleccionado && `${slotSeleccionado.start} - ${slotSeleccionado.end}`}
                         </p>
                       </div>
                     </div>
 
-                    {/* Total compacto */}
-                    <div className="mt-4 pt-3 border-t flex justify-between items-center">
-                      <span className="text-sm font-semibold text-gray-800">Total costo reserva</span>
-                      <span className="text-lg font-bold text-gray-900">$ 2,000</span>
+                    <div className="flex flex-col items-start lg:items-center justify-start bg-blue-50 border border-blue-200 rounded-lg p-5">
+                      <AlertCircle className="w-8 h-8 text-[#1E3A5F] mb-3" />
+                      <p className="text-sm text-center text-gray-700 leading-relaxed">
+                        Se te devolverá el costo de la reserva al momento de tu asistencia
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t">
+                    <div className="flex justify-between items-center mb-6">
+                      <span className="text-base font-semibold text-gray-800">Total costo reserva</span>
+                      <span className="text-2xl font-bold text-[#1E3A5F]">$ 2,000</span>
                     </div>
 
-                    {/* Botón Confirmar compacto */}
-                    <Button
-                      onClick={handleConfirmar}
-                      disabled={!canProceed()}
-                      className="w-full mt-4 bg-[#1E3A5F] hover:bg-[#2a5080] text-white py-2.5 text-sm font-medium"
-                    >
-                      Confirmar Reserva
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={handleConfirmar}
+                        disabled={!canProceed()}
+                        className="w-full md:w-auto bg-[#1E3A5F] hover:bg-[#2a5080] text-white px-8 py-3"
+                      >
+                        Confirmar Reserva
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
 

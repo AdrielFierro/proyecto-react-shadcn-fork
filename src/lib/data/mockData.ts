@@ -24,36 +24,78 @@ export const sedes: Sede[] = [
   },
 ];
 
-export const turnos: Turno[] = [
-  {
-    id: '1',
-    nombre: 'Desayuno',
-    horaInicio: '07:00',
-    horaFin: '09:00',
-    capacidad: 50,
-  },
-  {
-    id: '2',
-    nombre: 'Almuerzo',
-    horaInicio: '12:00',
-    horaFin: '14:30',
-    capacidad: 100,
-  },
-  {
-    id: '3',
-    nombre: 'Merienda',
-    horaInicio: '16:00',
-    horaFin: '18:00',
-    capacidad: 40,
-  },
-  {
-    id: '4',
-    nombre: 'Cena',
-    horaInicio: '20:00',
-    horaFin: '22:00',
-    capacidad: 80,
-  },
-];
+// Función helper para generar turnos para múltiples fechas y sedes
+const generarTurnos = (): Turno[] => {
+  const turnos: Turno[] = [];
+  const sedeIds = ['1', '2', '3'];
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  // Generar turnos para los próximos 14 días
+  for (let dia = 1; dia <= 14; dia++) {
+    const fecha = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + dia);
+    const fechaString = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
+
+    sedeIds.forEach(sedeId => {
+      // Desayuno
+      turnos.push({
+        id: `${sedeId}-1-${fechaString}`,
+        nombre: 'Desayuno',
+        horaInicio: '07:00',
+        horaFin: '09:00',
+        capacidad: 50,
+        sedeId,
+        fecha: fechaString,
+        meal: 'desayuno',
+        // Comedor Sur (id: '3') tiene desayuno agotado
+        reservedCount: sedeId === '3' ? 50 : Math.floor(Math.random() * 30),
+      });
+
+      // Almuerzo
+      turnos.push({
+        id: `${sedeId}-2-${fechaString}`,
+        nombre: 'Almuerzo',
+        horaInicio: '12:00',
+        horaFin: '14:30',
+        capacidad: 100,
+        sedeId,
+        fecha: fechaString,
+        meal: 'almuerzo',
+        reservedCount: Math.floor(Math.random() * 60),
+      });
+
+      // Merienda
+      turnos.push({
+        id: `${sedeId}-3-${fechaString}`,
+        nombre: 'Merienda',
+        horaInicio: '16:00',
+        horaFin: '18:00',
+        capacidad: 40,
+        sedeId,
+        fecha: fechaString,
+        meal: 'merienda',
+        reservedCount: Math.floor(Math.random() * 25),
+      });
+
+      // Cena
+      turnos.push({
+        id: `${sedeId}-4-${fechaString}`,
+        nombre: 'Cena',
+        horaInicio: '20:00',
+        horaFin: '22:00',
+        capacidad: 80,
+        sedeId,
+        fecha: fechaString,
+        meal: 'cena',
+        reservedCount: Math.floor(Math.random() * 50),
+      });
+    });
+  }
+
+  return turnos;
+};
+
+export const turnos: Turno[] = generarTurnos();
 
 export const consumibles: Consumible[] = [
   // Platos
