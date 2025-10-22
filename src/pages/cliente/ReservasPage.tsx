@@ -8,6 +8,7 @@ import { useAuthStore, useReservaStore } from '../../lib/store';
 import { MapPin, Clock, AlertTriangle, Plus, ArrowLeft, User, LogOut } from 'lucide-react';
 import { sedes, turnos } from '../../lib/data/mockData';
 import type { Reserva, ReservaStatus } from '../../types';
+import { RESERVA_STATUS_LABEL, RESERVA_STATUS_CLASS } from '../../types';
 
 export default function ReservasPage() {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ export default function ReservasPage() {
   const [reservaSeleccionada, setReservaSeleccionada] = useState<Reserva | null>(null);
   const [showCancelarDialog, setShowCancelarDialog] = useState(false);
 
-  // Filtrar y ordenar reservas del usuario actual
+  // Filtrar y ordenar: ACTIVAS primero, luego FINALIZADAS, luego CANCELADAS
   const misReservas = reservas
     .filter((r) => r.usuarioId === user?.id)
     .sort((a, b) => {
@@ -31,6 +32,11 @@ export default function ReservasPage() {
       const orderDiff = statusOrder[a.estado] - statusOrder[b.estado];
       if (orderDiff !== 0) return orderDiff;
       
+      // Dentro del mismo estado, ordenar por fecha (más próximas primero para ACTIVAS)
+      if (a.estado === 'ACTIVA') {
+        return new Date(a.fecha).getTime() - new Date(b.fecha).getTime();
+      }
+      // Para FINALIZADAS y CANCELADAS, más recientes primero
       return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
     });
 
@@ -48,7 +54,16 @@ export default function ReservasPage() {
   };
 
   const handleModificar = (reserva: Reserva) => {
-    navigate(`/cliente/modificar-reserva/${reserva.id}`);
+    // Navegar al wizard con datos precargados
+    const params = new URLSearchParams({
+      reservaId: reserva.id,
+      sedeId: reserva.sedeId,
+      fecha: reserva.fecha,
+      ...(reserva.meal && { meal: reserva.meal }),
+      ...(reserva.slotStart && { slotStart: reserva.slotStart }),
+      ...(reserva.slotEnd && { slotEnd: reserva.slotEnd }),
+    });
+    navigate(`/cliente/nueva-reserva?${params.toString()}`);
   };
 
   const handleLogout = () => {
@@ -67,62 +82,81 @@ export default function ReservasPage() {
     return `${dias[date.getDay()]}, ${date.getDate()} de ${meses[date.getMonth()]} de ${date.getFullYear()}`;
   };
 
-  const getEstadoBadge = (estado: ReservaStatus) => {
-    if (estado === 'ACTIVA') {
-      return <Badge className="bg-green-100 text-green-700 hover:bg-green-100 text-xs">Activa</Badge>;
-    }
-    if (estado === 'FINALIZADA') {
-      return <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-100 text-xs">Finalizada</Badge>;
-    }
-    if (estado === 'CANCELADA') {
-      return <Badge className="bg-red-100 text-red-700 hover:bg-red-100 text-xs">Cancelada</Badge>;
-    }
-    return <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-100 text-xs">{estado}</Badge>;
-  };
-
   const puedeModificarOCancelar = (reserva: Reserva): boolean => {
-    return reserva.estado === 'ACTIVA';
+    if (reserva.estado !== 'ACTIVA') return false;
+    
+    // Verificar si la reserva es futura
+    const fechaReserva = new Date(reserva.fecha);
+    const ahora = new Date();
+    
+    // Si tiene horario específico, verificar
+    if (reserva.slotStart) {
+      const [hours, minutes] = reserva.slotStart.split(':').map(Number);
+      fechaReserva.setHours(hours, minutes, 0, 0);
+    }
+    
+    // Permitir cancelar/modificar si la reserva es futura
+    return fechaReserva > ahora;
   };
 
   return (
-    <div className="min-h-screen bg-[#E8DED4]">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
-        <div className="container mx-auto px-4 md:px-6 py-3 md:py-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 md:gap-4 min-w-0">
+    <div className="min-h-screen bg-[#E8DED4] overflow-x-hidden">
+      {/* Header Responsive */}
+      <header className="sticky top-0 z-40 w-full border-b bg-white shadow-sm">
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 py-2 md:py-3">
+          <div className="flex items-center justify-between gap-2 sm:gap-3 min-w-0">
+            {/* Lado Izquierdo: Botón Volver + Título */}
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/cliente/dashboard')}
-                className="flex items-center gap-1 md:gap-2 shrink-0"
+                className="flex items-center gap-1 shrink-0 px-2 sm:px-3"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">Inicio</span>
+                <span className="hidden xs:inline text-sm">Inicio</span>
               </Button>
-              <div className="hidden sm:block border-l h-8 border-gray-300"></div>
+              
+              <div className="hidden sm:block border-l h-6 border-gray-300 shrink-0"></div>
+              
               <div className="min-w-0">
-                <h1 className="text-sm md:text-base font-semibold text-gray-800 truncate">Mis Reservas</h1>
-                <p className="text-xs text-gray-500 hidden sm:block">Portal del Comensal</p>
+                <h1 className="text-sm sm:text-base font-semibold text-gray-800 truncate">
+                  Mis Reservas
+                </h1>
+                <p className="text-xs text-gray-500 hidden md:block">Portal del Comensal</p>
               </div>
             </div>
-
-            <div className="flex items-center gap-2 md:gap-3 shrink-0">
-              <Badge className="bg-[#8B6F47] text-white hover:bg-[#8B6F47] px-2 md:px-3 py-1 md:py-1.5 text-xs hidden md:flex">
-                <User className="w-3 h-3 mr-1.5" />
-                {user?.nombre || 'Usuario Comensal'}
-              </Badge>
-              <Badge className="bg-[#8B6F47] text-white hover:bg-[#8B6F47] px-2 md:px-3 py-1 md:py-1.5 text-xs">
+            
+            {/* Lado Derecho: Rol + Usuario + Logout */}
+            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 min-w-0 shrink-0">
+              {/* Badge de Rol - Oculto en xs */}
+              <Badge className="hidden sm:inline-flex bg-[#8B6F47] text-white hover:bg-[#8B6F47] px-2 md:px-3 py-1 text-xs shrink-0">
                 COMENSAL
               </Badge>
+              
+              {/* Badge de Usuario con ícono - Visible solo en sm+ */}
+              <Badge className="hidden md:inline-flex bg-[#8B6F47] text-white hover:bg-[#8B6F47] px-2 md:px-3 py-1 text-xs shrink-0">
+                <User className="w-3 h-3 mr-1.5" />
+                <span className="max-w-[120px] truncate">
+                  {user?.nombre || 'Usuario'}
+                </span>
+              </Badge>
+              
+              {/* Nombre truncado - Solo en mobile */}
+              <span className="inline-flex md:hidden text-xs text-gray-700 font-medium max-w-[80px] sm:max-w-[100px] truncate">
+                {user?.nombre || 'Usuario'}
+              </span>
+              
+              {/* Botón Cerrar Sesión */}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleLogout}
-                className="text-gray-600 hover:text-gray-800 px-2 md:px-3"
+                className="text-gray-600 hover:text-gray-800 px-2 sm:px-3 shrink-0"
               >
-                <LogOut className="w-4 h-4 md:mr-2" />
-                <span className="hidden md:inline">Cerrar Sesión</span>
+                <LogOut className="w-4 h-4" />
+                <span className="hidden lg:inline ml-2">Cerrar Sesión</span>
+                <span className="sr-only">Cerrar sesión</span>
               </Button>
             </div>
           </div>
@@ -130,16 +164,16 @@ export default function ReservasPage() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 md:px-6 py-4 md:py-8 space-y-6 md:space-y-8">
+      <main className="container mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-8 space-y-4 md:space-y-6">
         {/* Section Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-[#1E3A5F] mb-1">Mis Reservas</h1>
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-[#1E3A5F] mb-1">Mis Reservas</h2>
             <p className="text-sm md:text-base text-gray-600">Gestiona tus reservas activas, finalizadas y canceladas</p>
           </div>
           <Button 
             onClick={() => navigate('/cliente/nueva-reserva')}
-            className="bg-[#1E3A5F] hover:bg-[#2a5080] w-full sm:w-auto"
+            className="bg-[#1E3A5F] hover:bg-[#2a5080] w-full sm:w-auto shrink-0"
           >
             <Plus className="w-4 h-4 mr-2" />
             Nueva Reserva
@@ -149,13 +183,13 @@ export default function ReservasPage() {
         {/* Reservas Grid */}
         {misReservas.length === 0 ? (
           <Card className="bg-white border-0 shadow-md">
-            <CardContent className="p-8 md:p-12 text-center">
+            <CardContent className="p-6 sm:p-8 md:p-12 text-center">
               <div className="flex flex-col items-center justify-center">
                 <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                   <Clock className="w-8 h-8 md:w-10 md:h-10 text-gray-400" />
                 </div>
                 <h3 className="text-lg md:text-xl font-semibold mb-2 text-gray-800">No tienes reservas</h3>
-                <p className="text-sm md:text-base text-gray-500 mb-6">Crea tu primera reserva para comenzar</p>
+                <p className="text-sm md:text-base text-gray-500 mb-4 md:mb-6">Crea tu primera reserva para comenzar</p>
                 <Button 
                   onClick={() => navigate('/cliente/nueva-reserva')} 
                   className="bg-[#1E3A5F] hover:bg-[#2a5080] w-full sm:w-auto"
@@ -179,8 +213,10 @@ export default function ReservasPage() {
                     {/* Header de la Card */}
                     <div className="mb-4 pb-4 border-b">
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="font-bold text-sm md:text-base text-[#1E3A5F]">Reserva #{reserva.id}</h3>
-                        {getEstadoBadge(reserva.estado)}
+                        <h3 className="font-bold text-sm md:text-base text-[#1E3A5F] truncate">Reserva #{reserva.id}</h3>
+                        <Badge className={`${RESERVA_STATUS_CLASS[reserva.estado]} text-xs shrink-0`}>
+                          {RESERVA_STATUS_LABEL[reserva.estado]}
+                        </Badge>
                       </div>
                       <p className="text-xs md:text-sm text-gray-500">{formatearFecha(reserva.fecha)}</p>
                     </div>
@@ -216,7 +252,7 @@ export default function ReservasPage() {
                         </div>
                       </div>
 
-                      {reserva.total && (
+                      {reserva.total !== undefined && (
                         <div className="pt-3 border-t">
                           <div className="flex justify-between items-center">
                             <span className="text-xs md:text-sm font-semibold text-gray-700">Total</span>
@@ -228,27 +264,29 @@ export default function ReservasPage() {
                       )}
                     </div>
 
-                    {/* Botones de Acción - Solo para reservas ACTIVAS */}
+                    {/* Botones de Acción - Solo para reservas ACTIVAS futuras */}
                     {mostrarBotones && (
-                      <div className="flex flex-col sm:flex-row gap-2 md:gap-3 mt-auto">
+                      <div className="flex flex-col sm:flex-row gap-2 mt-auto">
                         <Button
                           variant="destructive"
-                          className="flex-1 bg-red-500 hover:bg-red-600 text-xs md:text-sm w-full"
+                          className="flex-1 bg-red-500 hover:bg-red-600 text-xs md:text-sm w-full sm:w-auto"
                           onClick={() => handleCancelar(reserva)}
+                          aria-label={`Cancelar reserva ${reserva.id}`}
                         >
                           Cancelar
                         </Button>
                         <Button
                           variant="outline"
-                          className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50 text-xs md:text-sm w-full"
+                          className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50 text-xs md:text-sm w-full sm:w-auto"
                           onClick={() => handleModificar(reserva)}
+                          aria-label={`Modificar reserva ${reserva.id}`}
                         >
                           Modificar
                         </Button>
                       </div>
                     )}
 
-                    {/* Mensaje para reservas no modificables */}
+                    {/* Mensajes para reservas no modificables */}
                     {reserva.estado === 'FINALIZADA' && (
                       <div className="mt-auto pt-3 text-center">
                         <p className="text-xs text-gray-500">Esta reserva ya fue completada</p>
@@ -297,7 +335,7 @@ export default function ReservasPage() {
 
       {/* Dialog de Cancelación */}
       <Dialog open={showCancelarDialog} onOpenChange={setShowCancelarDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md mx-4">
           <DialogHeader>
             <DialogTitle className="text-lg md:text-xl">Cancelar Reserva</DialogTitle>
             <DialogDescription className="text-sm md:text-base">

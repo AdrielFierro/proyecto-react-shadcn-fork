@@ -28,52 +28,70 @@ export default function MenuPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#E8DED4]">
-      {/* Header */}
-      <header className="bg-white border-b shadow-sm sticky top-0 z-20">
-        <div className="container mx-auto px-4 md:px-6 py-3 md:py-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 md:gap-4 min-w-0">
+    <div className="min-h-screen bg-[#E8DED4] overflow-x-hidden">
+      {/* Header Responsive */}
+      <header className="sticky top-0 z-40 w-full border-b bg-white shadow-sm">
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 py-2 md:py-3">
+          <div className="flex items-center justify-between gap-2 sm:gap-3 min-w-0">
+            {/* Lado Izquierdo: Botón Volver + Título */}
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/cliente/dashboard')}
-                className="flex items-center gap-1 md:gap-2 shrink-0"
+                className="flex items-center gap-1 shrink-0 px-2 sm:px-3"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">Inicio</span>
+                <span className="hidden xs:inline text-sm">Inicio</span>
               </Button>
-              <div className="hidden sm:block border-l h-8 border-gray-300"></div>
+              
+              <div className="hidden sm:block border-l h-6 border-gray-300 shrink-0"></div>
+              
               <div className="min-w-0">
-                <h1 className="text-sm md:text-base font-semibold text-gray-800 truncate">Menú del Día</h1>
-                <p className="text-xs text-gray-500 hidden sm:block">Portal del Comensal</p>
+                <h1 className="text-sm sm:text-base font-semibold text-gray-800 truncate">
+                  Menú del Día
+                </h1>
+                <p className="text-xs text-gray-500 hidden md:block">Portal del Comensal</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-2 md:gap-3 shrink-0">
-              <Badge className="bg-[#8B6F47] text-white hover:bg-[#8B6F47] px-2 md:px-3 py-1 md:py-1.5 text-xs hidden md:flex">
-                <User className="w-3 h-3 mr-1.5" />
-                {user?.nombre || 'Usuario Comensal'}
-              </Badge>
-              <Badge className="bg-[#8B6F47] text-white hover:bg-[#8B6F47] px-2 md:px-3 py-1 md:py-1.5 text-xs">
+            {/* Lado Derecho: Rol + Usuario + Logout */}
+            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 min-w-0 shrink-0">
+              {/* Badge de Rol - Oculto en xs */}
+              <Badge className="hidden sm:inline-flex bg-[#8B6F47] text-white hover:bg-[#8B6F47] px-2 md:px-3 py-1 text-xs shrink-0">
                 COMENSAL
               </Badge>
               
+              {/* Badge de Usuario con ícono - Visible solo en sm+ */}
+              <Badge className="hidden md:inline-flex bg-[#8B6F47] text-white hover:bg-[#8B6F47] px-2 md:px-3 py-1 text-xs shrink-0">
+                <User className="w-3 h-3 mr-1.5" />
+                <span className="max-w-[120px] truncate">
+                  {user?.nombre || 'Usuario'}
+                </span>
+              </Badge>
+              
+              {/* Nombre truncado - Solo en mobile */}
+              <span className="inline-flex md:hidden text-xs text-gray-700 font-medium max-w-[80px] sm:max-w-[100px] truncate">
+                {user?.nombre || 'Usuario'}
+              </span>
+              
+              {/* Botón Cerrar Sesión */}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleLogout}
-                className="text-gray-600 hover:text-gray-800 px-2 md:px-3"
+                className="text-gray-600 hover:text-gray-800 px-2 sm:px-3 shrink-0"
               >
-                <LogOut className="w-4 h-4 md:mr-2" />
-                <span className="hidden md:inline">Cerrar Sesión</span>
+                <LogOut className="w-4 h-4" />
+                <span className="hidden lg:inline ml-2">Cerrar Sesión</span>
+                <span className="sr-only">Cerrar sesión</span>
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 md:px-6 py-4 md:py-6 space-y-4 md:space-y-6 pb-20 md:pb-8">
+      <main className="container mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6 space-y-4 md:space-y-6 pb-20 md:pb-8">
         {/* Título y descripción */}
         <div className="text-left">
           <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-1">Menú Disponible</h2>

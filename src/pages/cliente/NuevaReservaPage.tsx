@@ -62,7 +62,7 @@ export default function NuevaReservaPage() {
       usuarioId: user.id,
       sedeId: sedeSeleccionada.id,
       fecha: fechaSeleccionada,
-      estado: 'ACTIVA', 
+      estado: 'ACTIVA',
       items: [],
       total: costoReserva,
       fechaCreacion: new Date().toISOString(),
@@ -91,7 +91,6 @@ export default function NuevaReservaPage() {
     }
   };
 
-  // Generar fechas disponibles (próximos 14 días)
   const generarFechasDisponibles = () => {
     const fechas: Date[] = [];
     const hoy = new Date();
@@ -117,7 +116,6 @@ export default function NuevaReservaPage() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Generar slots cuando se selecciona meal
   const slots = mealSeleccionado && sedeSeleccionada && fechaSeleccionada
     ? buildSlotsForMeal({
         dateYmd: fechaSeleccionada,
@@ -127,10 +125,8 @@ export default function NuevaReservaPage() {
       })
     : [];
 
-  // Aplicar condición especial: Comedor Sur - Desayuno agotado
   const slotsConOcupacion = slots.map(slot => {
     const baseCount = getSlotCount(slot.id);
-    // Si es Comedor Sur (id: '3') y Desayuno, marcar como lleno
     if (sedeSeleccionada?.id === '3' && slot.meal === 'Desayuno') {
       return { ...slot, reservedCount: slot.capacity };
     }
@@ -138,45 +134,63 @@ export default function NuevaReservaPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#E8DED4]">
-      {/* Header */}
-      <header className="bg-white border-b shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-[#E8DED4] overflow-x-hidden">
+      {/* Header Responsive */}
+      <header className="sticky top-0 z-40 w-full border-b bg-white shadow-sm">
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 py-2 md:py-3">
+          <div className="flex items-center justify-between gap-2 sm:gap-3 min-w-0">
+            {/* Lado Izquierdo: Botón Volver + Título */}
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/cliente/dashboard')}
-                className="flex items-center gap-2"
+                className="flex items-center gap-1 shrink-0 px-2 sm:px-3"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Inicio
+                <span className="hidden xs:inline text-sm">Inicio</span>
               </Button>
-              <div className="border-l h-8 border-gray-300"></div>
-              <div>
-                <h1 className="text-base font-semibold text-gray-800">Nueva Reserva</h1>
-                <p className="text-xs text-gray-500">Portal del Comensal</p>
+              
+              <div className="hidden sm:block border-l h-6 border-gray-300 shrink-0"></div>
+              
+              <div className="min-w-0">
+                <h1 className="text-sm sm:text-base font-semibold text-gray-800 truncate">
+                  Nueva Reserva
+                </h1>
+                <p className="text-xs text-gray-500 hidden md:block">Portal del Comensal</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
-              <Badge className="bg-[#8B6F47] text-white hover:bg-[#8B6F47] px-3 py-1.5">
-                <User className="w-3 h-3 mr-1.5" />
-                {user?.nombre || 'Usuario Comensal'}
-              </Badge>
-              <Badge className="bg-[#8B6F47] text-white hover:bg-[#8B6F47] px-3 py-1.5">
+            {/* Lado Derecho: Rol + Usuario + Logout */}
+            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 min-w-0 shrink-0">
+              {/* Badge de Rol - Oculto en xs */}
+              <Badge className="hidden sm:inline-flex bg-[#8B6F47] text-white hover:bg-[#8B6F47] px-2 md:px-3 py-1 text-xs shrink-0">
                 COMENSAL
               </Badge>
               
+              {/* Badge de Usuario con ícono - Visible solo en sm+ */}
+              <Badge className="hidden md:inline-flex bg-[#8B6F47] text-white hover:bg-[#8B6F47] px-2 md:px-3 py-1 text-xs shrink-0">
+                <User className="w-3 h-3 mr-1.5" />
+                <span className="max-w-[120px] truncate">
+                  {user?.nombre || 'Usuario'}
+                </span>
+              </Badge>
+              
+              {/* Nombre truncado - Solo en mobile */}
+              <span className="inline-flex md:hidden text-xs text-gray-700 font-medium max-w-[80px] sm:max-w-[100px] truncate">
+                {user?.nombre || 'Usuario'}
+              </span>
+              
+              {/* Botón Cerrar Sesión */}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleLogout}
-                className="text-gray-600 hover:text-gray-800"
+                className="text-gray-600 hover:text-gray-800 px-2 sm:px-3 shrink-0"
               >
-                <LogOut className="w-4 h-4 mr-2" />
-                Cerrar Sesión
+                <LogOut className="w-4 h-4" />
+                <span className="hidden lg:inline ml-2">Cerrar Sesión</span>
+                <span className="sr-only">Cerrar sesión</span>
               </Button>
             </div>
           </div>
@@ -184,22 +198,22 @@ export default function NuevaReservaPage() {
       </header>
 
       {/* Stepper */}
-      <div className="container mx-auto px-6 py-6">
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6">
         <Stepper steps={steps} currentStep={currentStep} />
       </div>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 pb-8">
-        <div className="bg-white rounded-lg shadow-md p-8">
+      <main className="container mx-auto px-3 sm:px-4 md:px-6 pb-6 md:pb-8">
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 md:p-8">
           {/* Paso 1: Seleccionar Sede */}
           {currentStep === 1 && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-[#1E3A5F]">Selecciona una Sede</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-4 md:space-y-6">
+              <h2 className="text-xl md:text-2xl font-bold text-[#1E3A5F]">Selecciona una Sede</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {sedes.map((sede) => (
                   <Card
                     key={sede.id}
-                    className={`p-6 cursor-pointer transition-all border-2 hover:shadow-lg ${
+                    className={`p-4 md:p-6 cursor-pointer transition-all border-2 hover:shadow-lg ${
                       sedeSeleccionada?.id === sede.id
                         ? 'border-[#1E3A5F] bg-blue-50'
                         : 'border-gray-200 hover:border-[#1E3A5F]'
@@ -207,16 +221,16 @@ export default function NuevaReservaPage() {
                     onClick={() => setSedeSeleccionada(sede)}
                   >
                     <div className="flex items-start gap-3">
-                      <MapPin className={`w-6 h-6 mt-1 ${sedeSeleccionada?.id === sede.id ? 'text-[#1E3A5F]' : 'text-gray-400'}`} />
-                      <div className="flex-1">
-                        <h3 className="font-bold text-lg text-[#1E3A5F] mb-2">{sede.nombre}</h3>
-                        <p className="text-sm text-gray-600 mb-3">{sede.direccion}</p>
+                      <MapPin className={`w-5 h-5 md:w-6 md:h-6 mt-1 shrink-0 ${sedeSeleccionada?.id === sede.id ? 'text-[#1E3A5F]' : 'text-gray-400'}`} />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-base md:text-lg text-[#1E3A5F] mb-2 truncate">{sede.nombre}</h3>
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{sede.direccion}</p>
                         <div className="space-y-1 text-sm text-gray-700">
                           <p><span className="font-semibold">Capacidad:</span> {sede.capacidad} personas</p>
                         </div>
                       </div>
                       {sedeSeleccionada?.id === sede.id && (
-                        <Check className="w-6 h-6 text-[#1E3A5F]" />
+                        <Check className="w-5 h-5 md:w-6 md:h-6 text-[#1E3A5F] shrink-0" />
                       )}
                     </div>
                   </Card>
@@ -227,15 +241,15 @@ export default function NuevaReservaPage() {
 
           {/* Paso 2: Seleccionar Fecha */}
           {currentStep === 2 && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-[#1E3A5F]">Selecciona una Fecha</h2>
+            <div className="space-y-4 md:space-y-6">
+              <h2 className="text-xl md:text-2xl font-bold text-[#1E3A5F]">Selecciona una Fecha</h2>
               <div className="max-w-4xl mx-auto">
-                <div className="bg-blue-50 border border-[#1E3A5F] rounded-lg p-6 mb-6">
-                  <div className="flex items-center gap-2 text-[#1E3A5F] mb-2">
-                    <CalendarIcon className="w-5 h-5" />
-                    <span className="font-semibold">Sede seleccionada:</span>
+                <div className="bg-blue-50 border border-[#1E3A5F] rounded-lg p-4 md:p-6 mb-4 md:mb-6">
+                  <div className="flex items-center gap-2 text-[#1E3A5F] text-sm md:text-base">
+                    <CalendarIcon className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
+                    <span className="font-semibold">Sede:</span>
+                    <span className="truncate">{sedeSeleccionada?.nombre}</span>
                   </div>
-                  <p className="text-gray-700 ml-7">{sedeSeleccionada?.nombre}</p>
                 </div>
 
                 <div className="grid grid-cols-7 gap-1 sm:gap-2">
@@ -245,7 +259,6 @@ export default function NuevaReservaPage() {
                     </div>
                   ))}
                   
-                  {/* Rellenar espacios vacíos hasta el primer día */}
                   {fechasDisponibles.length > 0 && Array.from({ length: fechasDisponibles[0].getDay() }).map((_, index) => (
                     <div key={`empty-${index}`} className="aspect-square"></div>
                   ))}
@@ -282,33 +295,36 @@ export default function NuevaReservaPage() {
 
           {/* Paso 3: Seleccionar Meal y Horario */}
           {currentStep === 3 && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-[#1E3A5F]">Selecciona Turno y Horario</h2>
+            <div className="space-y-4 md:space-y-6">
+              <h2 className="text-xl md:text-2xl font-bold text-[#1E3A5F]">Selecciona Turno y Horario</h2>
               
-              <div className="bg-blue-50 border border-[#1E3A5F] rounded-lg p-4 mb-6">
-                <div className="flex items-center gap-2 text-[#1E3A5F] text-sm">
-                  <MapPin className="w-4 h-4" />
-                  <span className="font-semibold">{sedeSeleccionada?.nombre}</span>
+              <div className="bg-blue-50 border border-[#1E3A5F] rounded-lg p-3 md:p-4 mb-4 md:mb-6">
+                <div className="flex flex-wrap items-center gap-2 text-[#1E3A5F] text-xs sm:text-sm">
+                  <div className="flex items-center gap-1">
+                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+                    <span className="font-semibold truncate max-w-[120px] sm:max-w-none">{sedeSeleccionada?.nombre}</span>
+                  </div>
                   <span className="text-gray-600">•</span>
-                  <CalendarIcon className="w-4 h-4" />
-                  <span className="font-semibold">
-                    {fechaSeleccionada && (() => {
-                      const [year, month, day] = fechaSeleccionada.split('-').map(Number);
-                      const fecha = new Date(year, month - 1, day);
-                      return fecha.toLocaleDateString('es-ES', { 
-                        day: '2-digit',
-                        month: 'long',
-                        year: 'numeric'
-                      });
-                    })()}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+                    <span className="font-semibold whitespace-normal sm:whitespace-nowrap">
+                      {fechaSeleccionada && (() => {
+                        const [year, month, day] = fechaSeleccionada.split('-').map(Number);
+                        const fecha = new Date(year, month - 1, day);
+                        return fecha.toLocaleDateString('es-ES', { 
+                          day: '2-digit',
+                          month: 'long',
+                          year: 'numeric'
+                        });
+                      })()}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Selección de Meal */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">1. Selecciona el tipo de comida</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4">1. Selecciona el tipo de comida</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                   {MEALS.map((meal) => (
                     <button
                       key={meal}
@@ -316,7 +332,7 @@ export default function NuevaReservaPage() {
                         setMealSeleccionado(meal);
                         setSlotSeleccionado(null);
                       }}
-                      className={`p-4 rounded-lg border-2 transition-all font-medium ${
+                      className={`p-3 md:p-4 rounded-lg border-2 transition-all font-medium text-sm md:text-base ${
                         mealSeleccionado === meal
                           ? 'border-[#1E3A5F] bg-[#1E3A5F] text-white'
                           : 'border-gray-200 hover:border-[#1E3A5F] bg-white text-gray-700'
@@ -328,19 +344,18 @@ export default function NuevaReservaPage() {
                 </div>
               </div>
 
-              {/* Selección de Horario (Slots) */}
               {mealSeleccionado && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                  <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4">
                     2. Selecciona un horario para {getMealLabel(mealSeleccionado)}
                   </h3>
                   {slotsConOcupacion.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-500">No hay horarios disponibles</p>
+                    <div className="text-center py-8 md:py-12">
+                      <Clock className="w-12 h-12 md:w-16 md:h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500 text-sm md:text-base">No hay horarios disponibles</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                       {slotsConOcupacion.map((slot) => (
                         <SlotCard
                           key={slot.id}
@@ -359,26 +374,26 @@ export default function NuevaReservaPage() {
 
           {/* Paso 4: Confirmación */}
           {currentStep === 4 && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-[#1E3A5F]">Confirmar Reserva</h2>
+            <div className="space-y-4 md:space-y-6">
+              <h2 className="text-xl md:text-2xl font-bold text-[#1E3A5F]">Confirmar Reserva</h2>
               
               <Card className="border border-gray-300">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-3 border-b">
+                <CardContent className="p-4 sm:p-6">
+                  <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-4 pb-3 border-b">
                     Detalles de la Reserva
                   </h3>
                   
-                  <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 items-start">
+                  <div className="grid gap-4 md:gap-6 grid-cols-1 lg:grid-cols-2 items-start">
                     <div className="space-y-3 text-left">
                       <div>
-                        <p className="text-sm text-gray-500 mb-1">Sede</p>
-                        <p className="font-semibold text-gray-900">{sedeSeleccionada?.nombre}</p>
-                        <p className="text-sm text-gray-600">{sedeSeleccionada?.direccion}</p>
+                        <p className="text-xs md:text-sm text-gray-500 mb-1">Sede</p>
+                        <p className="font-semibold text-sm md:text-base text-gray-900">{sedeSeleccionada?.nombre}</p>
+                        <p className="text-xs md:text-sm text-gray-600">{sedeSeleccionada?.direccion}</p>
                       </div>
                       
                       <div>
-                        <p className="text-sm text-gray-500 mb-1">Fecha</p>
-                        <p className="font-semibold text-gray-900">
+                        <p className="text-xs md:text-sm text-gray-500 mb-1">Fecha</p>
+                        <p className="font-semibold text-sm md:text-base text-gray-900">
                           {fechaSeleccionada && (() => {
                             const [year, month, day] = fechaSeleccionada.split('-').map(Number);
                             const fecha = new Date(year, month - 1, day);
@@ -393,37 +408,37 @@ export default function NuevaReservaPage() {
                       </div>
                       
                       <div>
-                        <p className="text-sm text-gray-500 mb-1">Turno</p>
-                        <p className="font-semibold text-gray-900">{mealSeleccionado && getMealLabel(mealSeleccionado)}</p>
+                        <p className="text-xs md:text-sm text-gray-500 mb-1">Turno</p>
+                        <p className="font-semibold text-sm md:text-base text-gray-900">{mealSeleccionado && getMealLabel(mealSeleccionado)}</p>
                       </div>
                       
                       <div>
-                        <p className="text-sm text-gray-500 mb-1">Horario</p>
-                        <p className="font-semibold text-gray-900">
+                        <p className="text-xs md:text-sm text-gray-500 mb-1">Horario</p>
+                        <p className="font-semibold text-sm md:text-base text-gray-900">
                           {slotSeleccionado && `${slotSeleccionado.start} - ${slotSeleccionado.end}`}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-start lg:items-center justify-start bg-blue-50 border border-blue-200 rounded-lg p-5">
-                      <AlertCircle className="w-8 h-8 text-[#1E3A5F] mb-3" />
-                      <p className="text-sm text-center text-gray-700 leading-relaxed">
+                    <div className="flex flex-col items-start lg:items-center justify-start bg-blue-50 border border-blue-200 rounded-lg p-4 md:p-5">
+                      <AlertCircle className="w-6 h-6 md:w-8 md:h-8 text-[#1E3A5F] mb-2 md:mb-3" />
+                      <p className="text-xs md:text-sm text-center text-gray-700 leading-relaxed">
                         Se te devolverá el costo de la reserva al momento de tu asistencia
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-4 border-t">
-                    <div className="flex justify-between items-center mb-6">
-                      <span className="text-base font-semibold text-gray-800">Total costo reserva</span>
-                      <span className="text-2xl font-bold text-[#1E3A5F]">$ 2,000</span>
+                  <div className="mt-4 md:mt-6 pt-4 border-t">
+                    <div className="flex justify-between items-center mb-4 md:mb-6">
+                      <span className="text-sm md:text-base font-semibold text-gray-800">Total costo reserva</span>
+                      <span className="text-xl md:text-2xl font-bold text-[#1E3A5F]">$ 2,000</span>
                     </div>
 
                     <div className="flex justify-end">
                       <Button
                         onClick={handleConfirmar}
                         disabled={!canProceed()}
-                        className="w-full md:w-auto bg-[#1E3A5F] hover:bg-[#2a5080] text-white px-8 py-3"
+                        className="w-full md:w-auto bg-[#1E3A5F] hover:bg-[#2a5080] text-white px-6 md:px-8 py-2 md:py-3"
                       >
                         Confirmar Reserva
                       </Button>
@@ -435,13 +450,13 @@ export default function NuevaReservaPage() {
           )}
 
           {/* Footer con botones de navegación */}
-          <div className="flex justify-between mt-8 pt-6 border-t">
+          <div className="flex justify-between mt-6 md:mt-8 pt-4 md:pt-6 border-t gap-2 md:gap-3">
             <Button
               variant="outline"
               onClick={handleBack}
               disabled={currentStep === 1}
               size="lg"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 md:px-6"
             >
               Anterior
             </Button>
@@ -450,7 +465,7 @@ export default function NuevaReservaPage() {
                 onClick={handleNext}
                 disabled={!canProceed()}
                 size="lg"
-                className="bg-[#1E3A5F] hover:bg-[#2a5080] text-white"
+                className="bg-[#1E3A5F] hover:bg-[#2a5080] text-white px-4 md:px-6"
               >
                 Siguiente
               </Button>
@@ -459,7 +474,7 @@ export default function NuevaReservaPage() {
                 variant="outline"
                 onClick={() => setShowSuccessDialog(false)}
                 size="lg"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 md:px-6"
               >
                 Cancelar
               </Button>
@@ -470,27 +485,27 @@ export default function NuevaReservaPage() {
 
       {/* Dialog de Error */}
       <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md mx-4">
           <DialogHeader>
             <div className="flex justify-center mb-4">
-              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center">
-                <BellOff className="w-12 h-12 text-red-600" />
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-red-100 rounded-full flex items-center justify-center">
+                <BellOff className="w-10 h-10 md:w-12 md:h-12 text-red-600" />
               </div>
             </div>
-            <DialogTitle className="text-center text-2xl font-bold text-red-600">
+            <DialogTitle className="text-center text-xl md:text-2xl font-bold text-red-600">
               Reserva NO creada!
             </DialogTitle>
-            <DialogDescription className="text-center text-red-500 mt-2 font-medium">
+            <DialogDescription className="text-center text-red-500 mt-2 font-medium text-sm md:text-base">
               ¡Hubo un error!
             </DialogDescription>
-            <div className="text-center text-gray-700 mt-3 text-sm">
+            <div className="text-center text-gray-700 mt-3 text-xs md:text-sm">
               {errorMessage}
             </div>
           </DialogHeader>
-          <div className="flex justify-center mt-6">
+          <div className="flex justify-center mt-4 md:mt-6">
             <Button 
               onClick={() => setShowErrorDialog(false)}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-8"
+              className="bg-gray-600 hover:bg-gray-700 text-white px-6 md:px-8"
             >
               Entendido
             </Button>
@@ -500,31 +515,31 @@ export default function NuevaReservaPage() {
 
       {/* Dialog de Éxito */}
       <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md mx-4">
           <DialogHeader>
             <div className="flex justify-center mb-4">
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
-                <Check className="w-12 h-12 text-green-600" />
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-green-100 rounded-full flex items-center justify-center">
+                <Check className="w-10 h-10 md:w-12 md:h-12 text-green-600" />
               </div>
             </div>
-            <DialogTitle className="text-center text-2xl font-bold text-[#1E3A5F]">
+            <DialogTitle className="text-center text-xl md:text-2xl font-bold text-[#1E3A5F]">
               ¡Reserva Creada Exitosamente!
             </DialogTitle>
-            <DialogDescription className="text-center text-gray-600 mt-2">
+            <DialogDescription className="text-center text-gray-600 mt-2 text-sm md:text-base">
               Tu reserva ha sido creada exitosamente. Puedes verla en la sección de "Mis Reservas".
             </DialogDescription>
           </DialogHeader>
-          <div className="flex gap-3 justify-center mt-6">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center mt-4 md:mt-6">
             <Button 
               variant="outline" 
               onClick={() => navigate('/menu')}
-              className="border-[#1E3A5F] text-[#1E3A5F] hover:bg-blue-50"
+              className="border-[#1E3A5F] text-[#1E3A5F] hover:bg-blue-50 w-full sm:w-auto"
             >
               Ver Menú
             </Button>
             <Button 
               onClick={() => navigate('/reservas')}
-              className="bg-[#1E3A5F] hover:bg-[#2a5080] text-white"
+              className="bg-[#1E3A5F] hover:bg-[#2a5080] text-white w-full sm:w-auto"
             >
               Ver Mis Reservas
             </Button>
