@@ -16,12 +16,29 @@ export interface Sede {
   imagen?: string;
 }
 
+export type Meal = 'Desayuno' | 'Almuerzo' | 'Merienda' | 'Cena';
+
 export interface Turno {
   id: string;
   nombre: string;
   horaInicio: string;
   horaFin: string;
   capacidad: number;
+  sedeId: string;
+  fecha: string;
+  meal: 'desayuno' | 'almuerzo' | 'merienda' | 'cena';
+  reservedCount: number;
+}
+
+export interface TurnoHorario {
+  id: string;
+  venueId: string;
+  date: string;
+  meal: Meal;
+  start: string;
+  end: string;
+  capacity: number;
+  reservedCount: number;
 }
 
 export interface Consumible {
@@ -41,21 +58,41 @@ export interface ItemPedido {
   cantidad: number;
 }
 
+export type ReservaStatus = 'ACTIVA' | 'FINALIZADA' | 'CANCELADA';
+
 export interface Reserva {
   id: string;
   usuarioId: string;
   usuario?: User;
   sedeId: string;
   sede?: Sede;
-  turnoId: string;
+  turnoId?: string;
   turno?: Turno;
   fecha: string;
-  estado: 'pendiente' | 'confirmada' | 'pagada' | 'cancelada';
+  estado: ReservaStatus;
   items: ItemPedido[];
   total: number;
   metodoPago?: 'efectivo' | 'tarjeta' | 'transferencia';
   fechaCreacion: string;
+  meal?: Meal;
+  slotId?: string;
+  slotStart?: string;
+  slotEnd?: string;
 }
+
+// Mapeo de etiquetas para mostrar en UI
+export const RESERVA_STATUS_LABEL: Record<ReservaStatus, string> = {
+  ACTIVA: 'Activa',
+  FINALIZADA: 'Finalizada',
+  CANCELADA: 'Cancelada',
+};
+
+// Clases de Tailwind para cada estado (badges)
+export const RESERVA_STATUS_CLASS: Record<ReservaStatus, string> = {
+  ACTIVA: 'bg-green-100 text-green-700 hover:bg-green-100',
+  FINALIZADA: 'bg-sky-100 text-sky-700 hover:bg-sky-100',
+  CANCELADA: 'bg-red-100 text-red-700 hover:bg-red-100',
+};
 
 export interface MenuDia {
   id: string;
@@ -68,9 +105,9 @@ export interface MenuDia {
 
 export interface MenuSemanal {
   sedeId: string;
-  semana: string; // ISO week date
+  semana: string;
   dias: {
-    [dia: string]: { // 'lunes', 'martes', etc.
+    [dia: string]: {
       [turnoId: string]: {
         platoIds: string[];
         bebidaIds: string[];
