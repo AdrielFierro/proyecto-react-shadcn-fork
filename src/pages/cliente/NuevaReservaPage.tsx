@@ -7,8 +7,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import Stepper from '../../components/cliente/Stepper';
 import { useAuthStore, useReservaStore } from '../../lib/store';
 import { sedes, turnos } from '../../lib/data/mockData';
-import { User, LogOut, ArrowLeft, Calendar as CalendarIcon, MapPin, Clock, Check, AlertCircle, BellOff } from 'lucide-react';
+import { User, LogOut, ArrowLeft, Calendar as CalendarIcon, MapPin, Clock, Check, AlertCircle, BellOff, Users } from 'lucide-react';
 import type { Sede, Turno, Reserva } from '../../types';
+import TurnoCard from '../../components/cliente/TurnoCard';
 
 const steps = [
   { id: 1, nombre: 'Sede', descripcion: 'Selecciona la sede' },
@@ -26,18 +27,16 @@ export default function NuevaReservaPage() {
   const [sedeSeleccionada, setSedeSeleccionada] = useState<Sede | null>(null);
   const [fechaSeleccionada, setFechaSeleccionada] = useState<string>('');
   const [turnoSeleccionado, setTurnoSeleccionado] = useState<Turno | null>(null);
-  const [horaEspecifica, setHoraEspecifica] = useState<string>(''); // '07:00 AM', etc.
+  const [horaEspecifica, setHoraEspecifica] = useState<string>('');
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  // Estados para manejo de errores (preparados para integración con backend)
   const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [errorMessage, _setErrorMessage] = useState('');
 
-  // Horarios disponibles por turno (usando el ID del turno)
   const horariosDisponibles: Record<string, string[]> = {
-    '1': ['07:00 AM', '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM'], // Desayuno
-    '2': ['12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM'], // Almuerzo
-    '3': ['04:00 PM', '05:00 PM', '06:00 PM', '07:00 PM'], // Merienda
-    '4': ['08:00 PM', '09:00 PM', '10:00 PM'], // Cena
+    '1': ['07:00 AM', '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM'],
+    '2': ['12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM'],
+    '3': ['04:00 PM', '05:00 PM', '06:00 PM', '07:00 PM'],
+    '4': ['08:00 PM', '09:00 PM', '10:00 PM'],
   };
 
   const handleLogout = () => {
@@ -60,98 +59,7 @@ export default function NuevaReservaPage() {
   const handleConfirmar = () => {
     if (!user || !sedeSeleccionada || !fechaSeleccionada || !turnoSeleccionado) return;
 
-    // TODO: INTEGRACIÓN CON BACKEND - Descomentar cuando esté disponible la API
-    
-    // ==================== PASO 1: VALIDAR SALDO ====================
-    // const validarSaldo = async () => {
-    //   const response = await fetch(`/api/usuarios/${user.id}/saldo`);
-    //   const { saldo } = await response.json();
-    //   const costResponse = await fetch(`/api/reservas/calcular-costo`, {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({
-    //       sedeId: sedeSeleccionada.id,
-    //       turnoId: turnoSeleccionado.id,
-    //       fecha: fechaSeleccionada
-    //     })
-    //   });
-    //   const { total: costoReserva } = await costResponse.json();
-    //   
-    //   if (saldo < costoReserva) {
-    //     setErrorMessage('No tienes saldo suficiente en tu cuenta para realizar esta reserva.');
-    //     setShowErrorDialog(true);
-    //     return false;
-    //   }
-    //   return true;
-    // };
-
-    // ==================== PASO 2: VERIFICAR DISPONIBILIDAD ====================
-    // const verificarDisponibilidad = async () => {
-    //   const response = await fetch('/api/reservas/verificar-disponibilidad', {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({
-    //       sedeId: sedeSeleccionada.id,
-    //       fecha: fechaSeleccionada,
-    //       turnoId: turnoSeleccionado.id,
-    //       hora: horaEspecifica
-    //     })
-    //   });
-    //   const { disponible } = await response.json();
-    //   
-    //   if (!disponible) {
-    //     setErrorMessage('La sede y horario seleccionados ya están completos. Por favor, selecciona otra opción.');
-    //     setShowErrorDialog(true);
-    //     return false;
-    //   }
-    //   return true;
-    // };
-
-    // ==================== PASO 3: CREAR RESERVA EN BD ====================
-    // const crearReservaEnBD = async () => {
-    //   const response = await fetch('/api/reservas', {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({
-    //       usuarioId: user.id,
-    //       sedeId: sedeSeleccionada.id,
-    //       fecha: fechaSeleccionada,
-    //       turnoId: turnoSeleccionado.id,
-    //       hora: horaEspecifica
-    //     })
-    //   });
-    //   
-    //   if (!response.ok) {
-    //     const error = await response.json();
-    //     setErrorMessage(error.message || 'Error al crear la reserva. Por favor, intenta nuevamente.');
-    //     setShowErrorDialog(true);
-    //     return null;
-    //   }
-    //   
-    //   return await response.json();
-    // };
-
-    // ==================== FLUJO COMPLETO CON API ====================
-    // const procesarReserva = async () => {
-    //   // Validar saldo
-    //   const saldoValido = await validarSaldo();
-    //   if (!saldoValido) return;
-    //   
-    //   // Verificar disponibilidad
-    //   const disponibilidadValida = await verificarDisponibilidad();
-    //   if (!disponibilidadValida) return;
-    //   
-    //   // Crear reserva
-    //   const reservaCreada = await crearReservaEnBD();
-    //   if (reservaCreada) {
-    //     setShowSuccessDialog(true);
-    //   }
-    // };
-    // 
-    // procesarReserva();
-
-    // ==================== MODO DESARROLLO: Crear reserva localmente ====================
-    const costoReserva = 2000; // En producción, esto vendría del cálculo del backend
+    const costoReserva = 2000;
     
     const nuevaReserva: Reserva = {
       id: `R${String(Date.now()).slice(-3)}`,
@@ -184,12 +92,41 @@ export default function NuevaReservaPage() {
     }
   };
 
-  // Generar fechas disponibles (próximos 14 días)
-  const fechasDisponibles = Array.from({ length: 14 }, (_, i) => {
-    const fecha = new Date();
-    fecha.setDate(fecha.getDate() + i + 1);
-    return fecha.toISOString().split('T')[0];
-  });
+  // Generar fechas disponibles (próximos 14 días) - Construcción local
+  const generarFechasDisponibles = () => {
+    const fechas: Date[] = [];
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    for (let i = 1; i <= 14; i++) {
+      const fecha = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + i);
+      fecha.setHours(0, 0, 0, 0);
+      fechas.push(fecha);
+    }
+    return fechas;
+  };
+
+  const fechasDisponibles = generarFechasDisponibles();
+
+  // Función para convertir Date a string YYYY-MM-DD
+  const dateToString = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Normalizar today
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Filtrar turnos disponibles según sede y fecha seleccionadas
+  const turnosFiltrados = sedeSeleccionada && fechaSeleccionada
+    ? turnos.filter(t => 
+        t.sedeId === sedeSeleccionada.id && 
+        t.fecha === fechaSeleccionada
+      )
+    : [];
 
   return (
     <div className="min-h-screen bg-[#E8DED4]">
@@ -292,28 +229,40 @@ export default function NuevaReservaPage() {
                   <p className="text-gray-700 ml-7">{sedeSeleccionada?.nombre}</p>
                 </div>
 
-                <div className="grid grid-cols-7 gap-2">
+                <div className="grid grid-cols-7 gap-1 sm:gap-2">
                   {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map((day) => (
-                    <div key={day} className="text-center font-semibold text-[#1E3A5F] py-2">
+                    <div key={day} className="text-center font-semibold text-[#1E3A5F] py-2 text-xs sm:text-sm">
                       {day}
                     </div>
                   ))}
-                  {fechasDisponibles.map((fecha) => {
-                    const fechaObj = new Date(fecha + 'T00:00:00');
-                    const isSelected = fechaSeleccionada === fecha;
+                  
+                  {/* Rellenar espacios vacíos hasta el primer día */}
+                  {fechasDisponibles.length > 0 && Array.from({ length: fechasDisponibles[0].getDay() }).map((_, index) => (
+                    <div key={`empty-${index}`} className="aspect-square"></div>
+                  ))}
+
+                  {fechasDisponibles.map((fechaObj) => {
+                    const fechaString = dateToString(fechaObj);
+                    const isSelected = fechaSeleccionada === fechaString;
+                    const isPast = fechaObj < today;
                     
                     return (
                       <button
-                        key={fecha}
-                        onClick={() => setFechaSeleccionada(fecha)}
-                        className={`p-3 rounded-lg text-center transition-all ${
-                          isSelected
+                        key={fechaString}
+                        onClick={() => !isPast && setFechaSeleccionada(fechaString)}
+                        disabled={isPast}
+                        className={`aspect-square flex flex-col items-center justify-center rounded-lg text-center transition-all text-xs sm:text-sm ${
+                          isPast
+                            ? 'text-gray-400 opacity-60 cursor-not-allowed bg-gray-50'
+                            : isSelected
                             ? 'bg-[#1E3A5F] text-white font-bold'
-                            : 'bg-white hover:bg-blue-50 border border-gray-200 hover:border-[#1E3A5F]'
+                            : 'bg-white hover:bg-blue-50 border border-gray-200 hover:border-[#1E3A5F] cursor-pointer'
                         }`}
                       >
-                        <div className="text-lg">{fechaObj.getDate()}</div>
-                        <div className="text-xs">{fechaObj.toLocaleDateString('es-ES', { month: 'short' })}</div>
+                        <div className="text-base sm:text-lg font-semibold">{fechaObj.getDate()}</div>
+                        <div className="text-[10px] sm:text-xs">
+                          {fechaObj.toLocaleDateString('es-ES', { month: 'short' })}
+                        </div>
                       </button>
                     );
                   })}
@@ -325,57 +274,51 @@ export default function NuevaReservaPage() {
           {/* Paso 3: Seleccionar Turno */}
           {currentStep === 3 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-gray-800">Selecciona un Turno</h2>
+              <h2 className="text-2xl font-bold text-[#1E3A5F]">Selecciona un Turno</h2>
               
-              <div className="grid grid-cols-[300px_1fr] gap-6">
-                {/* Lista de turnos a la izquierda */}
-                <div className="space-y-3">
-                  {turnos.map((turno) => (
-                    <button
-                      key={turno.id}
-                      onClick={() => {
-                        setTurnoSeleccionado(turno);
-                        setHoraEspecifica(''); // Reset hora al cambiar turno
-                      }}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all ${
-                        turnoSeleccionado?.id === turno.id
-                          ? 'border-[#1E3A5F] bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300 bg-white'
-                      }`}
-                    >
-                      <Clock className={`w-5 h-5 ${turnoSeleccionado?.id === turno.id ? 'text-[#1E3A5F]' : 'text-gray-400'}`} />
-                      <span className={`font-medium ${turnoSeleccionado?.id === turno.id ? 'text-[#1E3A5F]' : 'text-gray-700'}`}>
-                        {turno.nombre}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Horarios específicos a la derecha */}
-                <div className="border-2 border-gray-200 rounded-lg p-6 bg-white">
-                  {turnoSeleccionado && horariosDisponibles[turnoSeleccionado.id] ? (
-                    <div className="grid grid-cols-2 gap-3">
-                      {horariosDisponibles[turnoSeleccionado.id].map((hora) => (
-                        <button
-                          key={hora}
-                          onClick={() => setHoraEspecifica(hora)}
-                          className={`px-6 py-3 rounded-lg border-2 transition-all font-medium ${
-                            horaEspecifica === hora
-                              ? 'border-[#1E3A5F] bg-[#1E3A5F] text-white'
-                              : 'border-gray-200 hover:border-[#1E3A5F] bg-white text-gray-700'
-                          }`}
-                        >
-                          {hora}
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-gray-400">
-                      <p>Selecciona un turno para ver los horarios disponibles</p>
-                    </div>
-                  )}
+              <div className="bg-blue-50 border border-[#1E3A5F] rounded-lg p-4 mb-6">
+                <div className="flex items-center gap-2 text-[#1E3A5F] text-sm">
+                  <MapPin className="w-4 h-4" />
+                  <span className="font-semibold">{sedeSeleccionada?.nombre}</span>
+                  <span className="text-gray-600">•</span>
+                  <CalendarIcon className="w-4 h-4" />
+                  <span className="font-semibold">
+                    {fechaSeleccionada && (() => {
+                      const [year, month, day] = fechaSeleccionada.split('-').map(Number);
+                      const fecha = new Date(year, month - 1, day);
+                      return fecha.toLocaleDateString('es-ES', { 
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric'
+                      });
+                    })()}
+                  </span>
                 </div>
               </div>
+
+              {turnosFiltrados.length === 0 ? (
+                <div className="text-center py-12">
+                  <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">No hay turnos disponibles para esta fecha y sede</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {turnosFiltrados.map((turno) => (
+                    <TurnoCard
+                      key={turno.id}
+                      turno={turno}
+                      isSelected={turnoSeleccionado?.id === turno.id}
+                      onSelect={(t) => {
+                        setTurnoSeleccionado(t);
+                        setHoraEspecifica('');
+                      }}
+                      horariosDisponibles={horariosDisponibles[turno.id]}
+                      horaEspecifica={horaEspecifica}
+                      onSelectHora={setHoraEspecifica}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -383,7 +326,7 @@ export default function NuevaReservaPage() {
           {currentStep === 4 && (
             <div className="flex justify-center">
               <div className="w-full max-w-2xl">
-                <h2 className="text-xl font-bold text-gray-800 mb-4">Selecciona un Turno</h2>
+                <h2 className="text-xl font-bold text-gray-800 mb-4">Confirmar Reserva</h2>
                 
                 <Card className="border border-gray-300">
                   <CardContent className="p-5">
@@ -395,11 +338,15 @@ export default function NuevaReservaPage() {
                         <p className="font-medium text-gray-900">{sedeSeleccionada?.nombre}</p>
                         <p className="text-gray-600 text-xs">{sedeSeleccionada?.direccion}</p>
                         <p className="text-gray-900 text-xs pt-1">
-                          {fechaSeleccionada && new Date(fechaSeleccionada + 'T00:00:00').toLocaleDateString('es-ES', { 
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric'
-                          })} - {turnoSeleccionado?.nombre}
+                          {fechaSeleccionada && (() => {
+                            const [year, month, day] = fechaSeleccionada.split('-').map(Number);
+                            const fecha = new Date(year, month - 1, day);
+                            return fecha.toLocaleDateString('es-ES', { 
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric'
+                            });
+                          })()} - {turnoSeleccionado?.nombre}
                         </p>
                         <p className="text-gray-600 text-xs">{horaEspecifica}</p>
                       </div>

@@ -22,6 +22,10 @@ export interface Turno {
   horaInicio: string;
   horaFin: string;
   capacidad: number;
+  sedeId: string;
+  fecha: string;
+  meal: 'desayuno' | 'almuerzo' | 'merienda' | 'cena';
+  reservedCount: number;
 }
 
 export interface Consumible {

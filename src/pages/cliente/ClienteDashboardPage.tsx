@@ -17,9 +17,9 @@ export default function ClienteDashboardPage() {
             <p className="text-gray-600">Selecciona una opción para comenzar</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 items-stretch">
             {/* Ver Menú */}
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer border-none" onClick={() => navigate('/menu')}>
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer border-none h-full flex flex-col" onClick={() => navigate('/menu')}>
               <CardHeader className="text-center pb-4">
                 <div className="w-20 h-20 bg-[#1E3A5F] rounded-full flex items-center justify-center mx-auto mb-4">
                   <Menu className="w-10 h-10 text-white" />
@@ -29,7 +29,7 @@ export default function ClienteDashboardPage() {
                   Consulta nuestro menú del día y opciones disponibles
                 </CardDescription>
               </CardHeader>
-              <CardContent className="text-center">
+              <CardContent className="text-center mt-auto pt-0">
                 <Button 
                   className="w-full bg-[#1E3A5F] hover:bg-[#2d5585] text-white"
                   onClick={() => navigate('/menu')}
@@ -40,7 +40,7 @@ export default function ClienteDashboardPage() {
             </Card>
 
             {/* Reservar */}
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer border-none" onClick={() => navigate('/nueva-reserva')}>
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer border-none h-full flex flex-col" onClick={() => navigate('/nueva-reserva')}>
               <CardHeader className="text-center pb-4">
                 <div className="w-20 h-20 bg-[#8B6F47] rounded-full flex items-center justify-center mx-auto mb-4">
                   <Calendar className="w-10 h-10 text-white" />
@@ -50,7 +50,7 @@ export default function ClienteDashboardPage() {
                   Haz una nueva reserva seleccionando sede, horario y menú
                 </CardDescription>
               </CardHeader>
-              <CardContent className="text-center">
+              <CardContent className="text-center mt-auto pt-0">
                 <Button 
                   className="w-full bg-[#1E3A5F] hover:bg-[#2d5585] text-white"
                   onClick={() => navigate('/nueva-reserva')}
@@ -61,7 +61,7 @@ export default function ClienteDashboardPage() {
             </Card>
 
             {/* Mis Reservas */}
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer border-none" onClick={() => navigate('/reservas')}>
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer border-none h-full flex flex-col" onClick={() => navigate('/reservas')}>
               <CardHeader className="text-center pb-4">
                 <div className="w-20 h-20 bg-[#8B6F47] rounded-full flex items-center justify-center mx-auto mb-4">
                   <ClipboardList className="w-10 h-10 text-white" />
@@ -71,7 +71,7 @@ export default function ClienteDashboardPage() {
                   Consulta y gestiona tus reservas activas
                 </CardDescription>
               </CardHeader>
-              <CardContent className="text-center">
+              <CardContent className="text-center mt-auto pt-0">
                 <Button 
                   className="w-full bg-[#1E3A5F] hover:bg-[#2d5585] text-white"
                   onClick={() => navigate('/reservas')}
