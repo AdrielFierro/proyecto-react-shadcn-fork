@@ -18,22 +18,20 @@ export default function ReservaDetallePage() {
   const { id } = useParams<{ id: string }>();
   const { user: cajeroUser, logout } = useAuthStore();
   const actualizarReserva = useReservaStore((state) => state.actualizarReserva);
-  
+
   const [reserva, setReserva] = useState<Reserva | null>(null);
   const [carrito, setCarrito] = useState<CartItem[]>([]);
 
-  useEffect(() => {
-    const reservaEncontrada = useReservaStore.getState().obtenerReservaPorId(id || '') || 
-      reservasIniciales.find((r) => r.id === id);
-    
-    if (reservaEncontrada) {
-      setReserva(reservaEncontrada);
-      setCarrito((reservaEncontrada.items || []).map(item => ({
-        consumible: item.consumible,
-        cantidad: item.cantidad
-      })));
-    }
-  }, [id]);
+useEffect(() => {
+  const reservaEncontrada =
+    useReservaStore.getState().obtenerReservaPorId(id || '') ||
+    reservasIniciales.find((r) => r.id === id);
+
+  if (reservaEncontrada) {
+    setReserva(reservaEncontrada);
+    setCarrito([]); // 👈 el cajero empieza con el carrito vacío
+  }
+}, [id]);
 
   const handleLogout = () => {
     logout();
@@ -42,10 +40,9 @@ export default function ReservaDetallePage() {
 
   const agregarAlCarrito = (consumible: Consumible) => {
     const itemExistente = carrito.find(item => item.consumible.id === consumible.id);
-    
     if (itemExistente) {
-      setCarrito(carrito.map(item => 
-        item.consumible.id === consumible.id 
+      setCarrito(carrito.map(item =>
+        item.consumible.id === consumible.id
           ? { ...item, cantidad: item.cantidad + 1 }
           : item
       ));
@@ -56,10 +53,9 @@ export default function ReservaDetallePage() {
 
   const disminuirDelCarrito = (consumibleId: string) => {
     const itemExistente = carrito.find(item => item.consumible.id === consumibleId);
-    
     if (itemExistente && itemExistente.cantidad > 1) {
-      setCarrito(carrito.map(item => 
-        item.consumible.id === consumibleId 
+      setCarrito(carrito.map(item =>
+        item.consumible.id === consumibleId
           ? { ...item, cantidad: item.cantidad - 1 }
           : item
       ));
@@ -73,24 +69,29 @@ export default function ReservaDetallePage() {
     return item ? item.cantidad : 0;
   };
 
-  const confirmarCarrito = () => {
-    if (!reserva) return;
-    
-    const total = carrito.reduce((sum, item) => sum + (item.consumible.precio * item.cantidad), 0);
-    
-    const items = carrito.map(item => ({
-      consumibleId: item.consumible.id,
-      consumible: item.consumible,
-      cantidad: item.cantidad
-    }));
-    
-    actualizarReserva(reserva.id, { 
-      items,
-      total
-    });
-    
-    navigate('/cajero/pago', { state: { reservaId: reserva.id } });
-  };
+ const confirmarCarrito = () => {
+   if (!reserva) return;
+
+   const total = carrito.reduce((sum, item) => sum + (item.consumible.precio * item.cantidad), 0);
+
+   const items = carrito.map(item => ({
+     consumibleId: item.consumible.id,
+     consumible: item.consumible,
+     cantidad: item.cantidad
+   }));
+
+   // ✅ Actualizamos en el store
+   actualizarReserva(reserva.id, { items, total });
+
+   // ✅ Pasamos también los ítems por "state" al navegar
+   navigate('/cajero/pago', {
+     state: {
+       reservaId: reserva.id,
+       items,
+       total
+     }
+   });
+ };
 
   if (!reserva) {
     return (
@@ -100,7 +101,7 @@ export default function ReservaDetallePage() {
           <p className="text-gray-600 mb-6">
             No se encontró una reserva con el ID: {id}
           </p>
-          <Button 
+          <Button
             onClick={() => navigate('/cajero')}
             className="bg-[#1E3A5F] hover:bg-[#2a5080] text-white"
           >
@@ -125,9 +126,9 @@ export default function ReservaDetallePage() {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => navigate('/cajero')}
                 className="hover:bg-blue-50"
               >
@@ -143,7 +144,7 @@ export default function ReservaDetallePage() {
                 <User className="w-4 h-4" />
                 <span className="text-sm font-medium">{cajeroUser?.nombre || 'Cajero Demo'}</span>
               </div>
-              <Button 
+              <Button
                 variant="outline"
                 onClick={handleLogout}
                 className="border-[#1E3A5F] text-[#1E3A5F] hover:bg-blue-50"
@@ -164,7 +165,7 @@ export default function ReservaDetallePage() {
             <h2 className="text-2xl font-bold text-[#1E3A5F]">Detalles de Reserva</h2>
             <p className="text-gray-600">Encontrado por ID: {reserva.id}</p>
           </div>
-          <Button 
+          <Button
             variant="destructive"
             onClick={() => navigate('/cajero')}
             className="bg-red-500 hover:bg-red-600"
@@ -197,7 +198,7 @@ export default function ReservaDetallePage() {
                   reserva.estado === 'confirmada' ? 'bg-blue-100 text-blue-800' :
                   'bg-yellow-100 text-yellow-800'
                 }>
-                  {reserva.estado === 'pagada' ? 'Activa' : 
+                  {reserva.estado === 'pagada' ? 'Activa' :
                    reserva.estado === 'confirmada' ? 'Confirmada' : 'Pendiente'}
                 </Badge>
               </div>
@@ -244,16 +245,24 @@ export default function ReservaDetallePage() {
               return (
                 <Card key={plato.id} className="bg-white shadow-md overflow-hidden">
                   <div className="relative h-32 bg-gradient-to-br from-orange-100 to-orange-200">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Utensils className="w-16 h-16 text-orange-400 opacity-50" />
-                    </div>
-                    <div className="absolute top-2 left-2 bg-white px-3 py-1 rounded-full">
+                    {plato.imagen ? (
+                      <img
+                        src={plato.imagen}
+                        alt={plato.nombre}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Utensils className="w-16 h-16 text-orange-400 opacity-50" />
+                      </div>
+                    )}
+                    <div className="absolute top-2 left-2 bg-white px-3 py-1 rounded-full shadow-md">
                       <span className="text-sm font-bold text-[#1E3A5F]">{plato.nombre}</span>
                     </div>
                   </div>
                   <div className="p-4">
                     {cantidad === 0 ? (
-                      <Button 
+                      <Button
                         onClick={() => agregarAlCarrito(plato)}
                         className="w-full bg-green-500 hover:bg-green-600 text-white"
                       >
@@ -297,16 +306,24 @@ export default function ReservaDetallePage() {
               return (
                 <Card key={bebida.id} className="bg-white shadow-md overflow-hidden">
                   <div className="relative h-32 bg-gradient-to-br from-blue-100 to-blue-200">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Wine className="w-16 h-16 text-blue-400 opacity-50" />
-                    </div>
-                    <div className="absolute top-2 left-2 bg-white px-3 py-1 rounded-full">
+                    {bebida.imagen ? (
+                      <img
+                        src={bebida.imagen}
+                        alt={bebida.nombre}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Wine className="w-16 h-16 text-blue-400 opacity-50" />
+                      </div>
+                    )}
+                    <div className="absolute top-2 left-2 bg-white px-3 py-1 rounded-full shadow-md">
                       <span className="text-sm font-bold text-[#1E3A5F]">{bebida.nombre}</span>
                     </div>
                   </div>
                   <div className="p-4">
                     {cantidad === 0 ? (
-                      <Button 
+                      <Button
                         onClick={() => agregarAlCarrito(bebida)}
                         className="w-full bg-green-500 hover:bg-green-600 text-white"
                       >
@@ -350,16 +367,24 @@ export default function ReservaDetallePage() {
               return (
                 <Card key={postre.id} className="bg-white shadow-md overflow-hidden">
                   <div className="relative h-32 bg-gradient-to-br from-pink-100 to-pink-200">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Cake className="w-16 h-16 text-pink-400 opacity-50" />
-                    </div>
-                    <div className="absolute top-2 left-2 bg-white px-3 py-1 rounded-full">
+                    {postre.imagen ? (
+                      <img
+                        src={postre.imagen}
+                        alt={postre.nombre}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Cake className="w-16 h-16 text-pink-400 opacity-50" />
+                      </div>
+                    )}
+                    <div className="absolute top-2 left-2 bg-white px-3 py-1 rounded-full shadow-md">
                       <span className="text-sm font-bold text-[#1E3A5F]">{postre.nombre}</span>
                     </div>
                   </div>
                   <div className="p-4">
                     {cantidad === 0 ? (
-                      <Button 
+                      <Button
                         onClick={() => agregarAlCarrito(postre)}
                         className="w-full bg-green-500 hover:bg-green-600 text-white"
                       >
@@ -393,7 +418,7 @@ export default function ReservaDetallePage() {
 
         {/* Botón Confirmar Carrito */}
         <div className="flex justify-center">
-          <Button 
+          <Button
             onClick={confirmarCarrito}
             disabled={carrito.length === 0}
             size="lg"

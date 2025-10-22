@@ -1,5 +1,6 @@
 import type { Sede, Turno, Consumible, Reserva, User } from '../../types';
 
+
 export const sedes: Sede[] = [
   {
     id: '1',
@@ -101,11 +102,11 @@ export const consumibles: Consumible[] = [
   // Platos
   {
     id: '1',
-    nombre: 'Milanesa con Papas Fritas',
+    nombre: 'Milanesa con Pure',
     tipo: 'plato',
     descripcion: 'Milanesa de ternera con papas fritas',
     precio: 850,
-    imagen: 'https://images.unsplash.com/photo-1632778149955-e80f8ceca2e8?w=400',
+    imagen: '/images/milanesa.png',
     disponible: true,
     categoria: 'Principal',
   },
@@ -115,54 +116,36 @@ export const consumibles: Consumible[] = [
     tipo: 'plato',
     descripcion: 'Lechuga romana, pollo grillado, crutones y aderezo césar',
     precio: 750,
-    imagen: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=300',
+    imagen: '/images/ensalada.png',
     disponible: true,
     categoria: 'Ensaladas',
   },
-  {
+ {
     id: '3',
-    nombre: 'Pasta Carbonara',
-    tipo: 'plato',
-    descripcion: 'Fetuccini con salsa carbonara y panceta',
-    precio: 900,
-    imagen: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=300',
-    disponible: true,
-    categoria: 'Pastas',
-  },
-  {
-    id: '4',
-    nombre: 'Pollo al Horno',
-    tipo: 'plato',
-    descripcion: 'Cuarto de pollo con papas y verduras asadas',
-    precio: 950,
-    imagen: 'https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=300',
-    disponible: true,
-    categoria: 'Principal',
-  },
-  {
-    id: '5',
     nombre: 'Pizza Margarita',
     tipo: 'plato',
     descripcion: 'Pizza con salsa de tomate, mozzarella y albahaca',
     precio: 800,
-    imagen: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=300',
+    imagen: '/images/pizza.png',
     disponible: true,
     categoria: 'Pizzas',
   },
-  // Bebidas
+   // Bebidas
   {
     id: '6',
     nombre: 'Agua Mineral',
     tipo: 'bebida',
     descripcion: 'Agua mineral sin gas 500ml',
+    imagen: '/images/agua.png',
     precio: 150,
     disponible: true,
   },
   {
     id: '7',
-    nombre: 'Coca Cola',
+    nombre: 'Gaseosas',
     tipo: 'bebida',
-    descripcion: 'Gaseosa cola 500ml',
+    descripcion: 'Gaseosa 500ml',
+    imagen: '/images/gaseosas.png',
     precio: 200,
     disponible: true,
   },
@@ -171,17 +154,11 @@ export const consumibles: Consumible[] = [
     nombre: 'Jugo de Naranja',
     tipo: 'bebida',
     descripcion: 'Jugo natural de naranja exprimida',
+    imagen: '/images/jugo.png',
     precio: 250,
     disponible: true,
   },
-  {
-    id: '9',
-    nombre: 'Café',
-    tipo: 'bebida',
-    descripcion: 'Café americano',
-    precio: 180,
-    disponible: true,
-  },
+
   // Postres
   {
     id: '10',
@@ -189,29 +166,20 @@ export const consumibles: Consumible[] = [
     tipo: 'postre',
     descripcion: 'Delicioso brownie de chocolate con helado de vainilla',
     precio: 350,
-    imagen: 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=300',
+    imagen: '/images/flan.png',
     disponible: true,
   },
   {
     id: '11',
-    nombre: 'Helado',
+    nombre: 'Panqueques con dulce de leche',
     tipo: 'postre',
-    descripcion: 'Dos bochas de helado a elección',
+    descripcion: 'Panqueques con dulce de leche',
     precio: 400,
-    imagen: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=300',
+    imagen: '/images/panqueque.png',
     disponible: true,
   },
   {
     id: '12',
-    nombre: 'Tiramisu',
-    tipo: 'postre',
-    descripcion: 'Clásico postre italiano con café y mascarpone',
-    precio: 450,
-    imagen: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=300',
-    disponible: true,
-  },
-  {
-    id: '13',
     nombre: 'Ensalada de Frutas',
     tipo: 'postre',
     descripcion: 'Frutas frescas de estación',
@@ -252,8 +220,8 @@ export const reservasIniciales: Reserva[] = [
     fecha: '2025-10-26',
     estado: 'ACTIVA',
     items: [
-      { consumibleId: '3', consumible: consumibles[2], cantidad: 1 },
-      { consumibleId: '8', consumible: consumibles[7], cantidad: 1 },
+      { consumibleId: '3', consumible: consumibles.find(c => c.id === '3')!, cantidad: 1 },
+      { consumibleId: '8', consumible: consumibles.find(c => c.id === '8')!, cantidad: 1 },
     ],
     total: 1150,
     fechaCreacion: '2025-10-22T14:20:00',

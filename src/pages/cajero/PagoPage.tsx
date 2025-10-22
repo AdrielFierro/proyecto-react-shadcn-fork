@@ -17,19 +17,28 @@ export default function PagoPage() {
   const [reserva, setReserva] = useState<Reserva | null>(null);
   const [metodoPago, setMetodoPago] = useState<'efectivo' | 'transferencia' | 'tarjeta'>('efectivo');
 
+  // ✅ useEffect corregido: ahora toma los items seleccionados desde el state al navegar
   useEffect(() => {
     if (!reservaId) {
       navigate('/cajero');
       return;
     }
 
-    const reservaEncontrada = useReservaStore.getState().obtenerReservaPorId(reservaId) || 
+    const itemsFromState = location.state?.items;
+    const totalFromState = location.state?.total;
+
+    const reservaEncontrada =
+      useReservaStore.getState().obtenerReservaPorId(reservaId) ||
       reservasIniciales.find((r) => r.id === reservaId);
-    
+
     if (reservaEncontrada) {
-      setReserva(reservaEncontrada);
+      setReserva({
+        ...reservaEncontrada,
+        items: itemsFromState || reservaEncontrada.items || [],
+        total: totalFromState || reservaEncontrada.total || 0,
+      });
     }
-  }, [reservaId, navigate]);
+  }, [reservaId, navigate, location]);
 
   const handleLogout = () => {
     logout();
@@ -38,7 +47,7 @@ export default function PagoPage() {
 
   const disminuirCantidad = (consumibleId: string) => {
     if (!reserva) return;
-    
+
     const nuevoItems = reserva.items.map(item => {
       if (item.consumible.id === consumibleId && item.cantidad > 1) {
         return { ...item, cantidad: item.cantidad - 1 };
@@ -47,13 +56,13 @@ export default function PagoPage() {
     }).filter(item => item.cantidad > 0);
 
     const nuevoTotal = nuevoItems.reduce((sum, item) => sum + (item.consumible.precio * item.cantidad), 0);
-    
+
     setReserva({ ...reserva, items: nuevoItems, total: nuevoTotal });
   };
 
   const aumentarCantidad = (consumibleId: string) => {
     if (!reserva) return;
-    
+
     const nuevoItems = reserva.items.map(item => {
       if (item.consumible.id === consumibleId) {
         return { ...item, cantidad: item.cantidad + 1 };
@@ -62,7 +71,7 @@ export default function PagoPage() {
     });
 
     const nuevoTotal = nuevoItems.reduce((sum, item) => sum + (item.consumible.precio * item.cantidad), 0);
-    
+
     setReserva({ ...reserva, items: nuevoItems, total: nuevoTotal });
   };
 
@@ -76,12 +85,12 @@ export default function PagoPage() {
       metodoPago
     });
 
-    navigate('/cajero/pago-exitoso', { 
-      state: { 
-        reservaId: reserva.id, 
-        metodoPago, 
-        total: reserva.total 
-      } 
+    navigate('/cajero/pago-exitoso', {
+      state: {
+        reservaId: reserva.id,
+        metodoPago,
+        total: reserva.total
+      }
     });
   };
 
@@ -90,7 +99,7 @@ export default function PagoPage() {
       <div className="min-h-screen bg-[#E8DED4] flex items-center justify-center">
         <Card className="max-w-md p-8">
           <h2 className="text-2xl font-bold text-[#1E3A5F] mb-4">Reserva no encontrada</h2>
-          <Button 
+          <Button
             onClick={() => navigate('/cajero')}
             className="bg-[#1E3A5F] hover:bg-[#2a5080] text-white"
           >
@@ -101,7 +110,7 @@ export default function PagoPage() {
     );
   }
 
-  const costoReserva = 2.5; // Costo base de reserva que se devuelve
+  const costoReserva = 2.5;
   const subtotal = reserva.total;
   const totalAPagar = subtotal - costoReserva;
 
@@ -112,9 +121,9 @@ export default function PagoPage() {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => navigate(`/cajero/reserva/${reserva.id}`)}
                 className="hover:bg-blue-50"
               >
@@ -130,7 +139,7 @@ export default function PagoPage() {
                 <User className="w-4 h-4" />
                 <span className="text-sm font-medium">{cajeroUser?.nombre || 'Cajero Demo'}</span>
               </div>
-              <Button 
+              <Button
                 variant="outline"
                 onClick={handleLogout}
                 className="border-[#1E3A5F] text-[#1E3A5F] hover:bg-blue-50"
@@ -145,25 +154,29 @@ export default function PagoPage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-6 max-w-4xl">
-        {/* Título */}
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-[#1E3A5F]">Detalles de Reserva</h2>
           <p className="text-gray-600">Encontrado por ID: {reserva.id}</p>
         </div>
 
-        {/* Sección de Pedido */}
+        {/* Pedido */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-4">
             <Receipt className="w-6 h-6 text-[#1E3A5F]" />
             <h3 className="text-xl font-bold text-[#1E3A5F]">Pedido</h3>
           </div>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {reserva.items.map((item) => (
               <Card key={item.consumible.id} className="bg-white shadow-md overflow-hidden">
-                <div className="relative h-24 bg-gradient-to-br from-orange-100 to-orange-200">
+                <div className="relative h-24">
+                  <img
+                    src={item.consumible.imagen}
+                    alt={item.consumible.nombre}
+                    className="w-full h-full object-cover"
+                  />
                   <div className="absolute top-2 left-2 right-2">
-                    <span className="text-xs font-bold text-[#1E3A5F] bg-white px-2 py-1 rounded-full inline-block">
+                    <span className="text-xs font-bold text-[#1E3A5F] bg-white px-2 py-1 rounded-full inline-block shadow">
                       {item.consumible.nombre}
                     </span>
                   </div>
@@ -191,9 +204,9 @@ export default function PagoPage() {
                 </div>
               </Card>
             ))}
-            
-            {/* Card para agregar más items */}
-            <Card 
+
+            {/* Agregar más */}
+            <Card
               className="bg-white shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
               onClick={() => navigate(`/cajero/reserva/${reserva.id}`)}
             >
@@ -207,10 +220,9 @@ export default function PagoPage() {
           </div>
         </div>
 
-        {/* Card de Cuenta */}
+        {/* Cuenta */}
         <Card className="bg-white shadow-lg p-6 mb-6">
           <h3 className="text-xl font-bold text-[#1E3A5F] mb-4">Cuenta</h3>
-          
           <div className="space-y-3 mb-4">
             {reserva.items.map((item) => (
               <div key={item.consumible.id} className="flex justify-between text-sm">
@@ -222,7 +234,6 @@ export default function PagoPage() {
                 </span>
               </div>
             ))}
-            
             <div className="flex justify-between text-sm border-t pt-3">
               <span className="text-gray-700">Devolución Costo Reserva</span>
               <span className="font-semibold text-green-600">-$ {costoReserva.toFixed(3)}</span>
@@ -241,7 +252,7 @@ export default function PagoPage() {
         <Card className="bg-white shadow-lg p-6 mb-6">
           <h3 className="text-xl font-bold text-[#1E3A5F] mb-2">Medio de pago</h3>
           <p className="text-sm text-gray-600 mb-4">Selecciona el medio de pago del cliente:</p>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button
               onClick={() => setMetodoPago('efectivo')}
@@ -287,7 +298,7 @@ export default function PagoPage() {
           </div>
         </Card>
 
-        {/* Botón Confirmar Compra */}
+        {/* Confirmar Compra */}
         <div className="flex justify-center">
           <Button 
             onClick={confirmarCompra}
