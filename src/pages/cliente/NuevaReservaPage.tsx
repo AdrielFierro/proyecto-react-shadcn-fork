@@ -10,6 +10,7 @@ import { useAuthStore, useReservaStore } from '../../lib/store';
 import { sedes } from '../../lib/data/mockData';
 import { User, LogOut, ArrowLeft, Calendar as CalendarIcon, MapPin, Clock, Check, AlertCircle, BellOff } from 'lucide-react';
 import type { Sede, Reserva, Meal, TurnoHorario } from '../../types';
+import { COSTO_RESERVA } from '../../lib/config';
 import { buildSlotsForMeal, getMealLabel } from '../../lib/utils/slots';
 
 const steps = [
@@ -55,8 +56,6 @@ export default function NuevaReservaPage() {
   const handleConfirmar = () => {
     if (!user || !sedeSeleccionada || !fechaSeleccionada || !slotSeleccionado) return;
 
-    const costoReserva = 2000;
-    
     const nuevaReserva: Reserva = {
       id: `R${String(Date.now()).slice(-3)}`,
       usuarioId: user.id,
@@ -64,7 +63,7 @@ export default function NuevaReservaPage() {
       fecha: fechaSeleccionada,
       estado: 'ACTIVA',
       items: [],
-      total: costoReserva,
+      total: COSTO_RESERVA,
       fechaCreacion: new Date().toISOString(),
       meal: slotSeleccionado.meal,
       slotId: slotSeleccionado.id,
@@ -439,7 +438,7 @@ export default function NuevaReservaPage() {
                   <div className="mt-4 md:mt-6 pt-4 border-t">
                     <div className="flex justify-between items-center mb-4 md:mb-6">
                       <span className="text-sm md:text-base font-semibold text-gray-800">Total costo reserva</span>
-                      <span className="text-xl md:text-2xl font-bold text-[#1E3A5F]">$ 2,000</span>
+                      <span className="text-xl md:text-2xl font-bold text-[#1E3A5F]">$ {COSTO_RESERVA.toFixed(0)}</span>
                     </div>
 
                     <div className="flex justify-end">
