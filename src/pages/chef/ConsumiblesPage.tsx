@@ -9,14 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Edit, Trash2, User, LogOut, Utensils, Wine, Cake, Home, Search } from 'lucide-react';
-import { consumibles as consumiblesIniciales } from '../../lib/data/mockData';
-import { useAuthStore } from '../../lib/store';
+import { useAuthStore, useChefConsumiblesStore, useChefMenuStore } from '../../lib/store';
 import type { Consumible } from '../../types';
 
 export default function ConsumiblesPage() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const [consumibles, setConsumibles] = useState<Consumible[]>(consumiblesIniciales);
+  const { consumibles, addConsumible, updateConsumible, deleteConsumible } = useChefConsumiblesStore();
+  const removeConsumibleFromMenus = useChefMenuStore((state) => state.removeConsumibleFromMenus);
   const [showDialog, setShowDialog] = useState(false);
   const [editingConsumible, setEditingConsumible] = useState<Consumible | null>(null);
   const [formData, setFormData] = useState<Partial<Consumible>>({
@@ -26,7 +26,9 @@ export default function ConsumiblesPage() {
     precio: 0,
     disponible: true,
     categoria: '',
+    imagen: '',
   });
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
 
   const handleLogout = () => {
     logout();
@@ -35,6 +37,7 @@ export default function ConsumiblesPage() {
 
   const handleCreate = () => {
     setEditingConsumible(null);
+    setSelectedImageFile(null);
     setFormData({
       nombre: '',
       tipo: 'plato',
@@ -42,48 +45,115 @@ export default function ConsumiblesPage() {
       precio: 0,
       disponible: true,
       categoria: '',
+      imagen: '',
     });
     setShowDialog(true);
   };
 
   const handleEdit = (consumible: Consumible) => {
     setEditingConsumible(consumible);
+    setSelectedImageFile(null);
     setFormData(consumible);
     setShowDialog(true);
   };
 
   const handleDelete = (id: string) => {
     if (confirm('¿Estás seguro de eliminar este consumible?')) {
-      setConsumibles(consumibles.filter((c) => c.id !== id));
+      deleteConsumible(id);
+      removeConsumibleFromMenus(id);
     }
   };
 
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setSelectedImageFile(null);
+      setFormData((prev) => ({
+        ...prev,
+        imagen: editingConsumible?.imagen || '',
+      }));
+      event.target.value = '';
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      alert('El archivo seleccionado debe ser una imagen.');
+      event.target.value = '';
+      return;
+    }
+
+    setSelectedImageFile(file);
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setFormData((prev) => ({ ...prev, imagen: reader.result }));
+      }
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImageFile(null);
+    setFormData((prev) => ({ ...prev, imagen: '' }));
+  };
+
+
   const handleSave = () => {
-    if (!formData.nombre || !formData.precio) {
+    const nombre = formData.nombre?.trim() || '';
+    const parsedPrice = Number(formData.precio);
+
+    if (!nombre || Number.isNaN(parsedPrice) || parsedPrice <= 0) {
       alert('Complete todos los campos requeridos');
       return;
     }
 
+    const tipo = (formData.tipo as 'plato' | 'bebida' | 'postre') || 'plato';
+    const descripcion = (formData.descripcion ?? '').trim();
+    const categoria = formData.categoria?.trim();
+    const disponible = formData.disponible ?? true;
+    const imagen = formData.imagen?.toString().trim() || undefined;
+
     if (editingConsumible) {
-      setConsumibles(
-        consumibles.map((c) =>
-          c.id === editingConsumible.id ? { ...c, ...formData } : c
-        )
-      );
+      updateConsumible(editingConsumible.id, {
+        nombre,
+        tipo,
+        descripcion,
+        precio: parsedPrice,
+        disponible,
+        categoria: categoria || undefined,
+        imagen,
+      });
     } else {
+      const id = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `consumible-${Date.now()}`;
+
       const nuevoConsumible: Consumible = {
-        id: String(Date.now()),
-        nombre: formData.nombre || '',
-        tipo: formData.tipo as 'plato' | 'bebida' | 'postre',
-        descripcion: formData.descripcion || '',
-        precio: formData.precio || 0,
-        disponible: formData.disponible ?? true,
-        categoria: formData.categoria,
+        id,
+        nombre,
+        tipo,
+        descripcion,
+        precio: parsedPrice,
+        disponible,
+        categoria: categoria || undefined,
+        imagen,
       };
-      setConsumibles([...consumibles, nuevoConsumible]);
+
+      addConsumible(nuevoConsumible);
     }
 
     setShowDialog(false);
+    setEditingConsumible(null);
+    setSelectedImageFile(null);
+  };
+
+  const handleDialogToggle = (open: boolean) => {
+    setShowDialog(open);
+    if (!open) {
+      setSelectedImageFile(null);
+      setEditingConsumible(null);
+    }
   };
 
   const platos = consumibles.filter((c) => c.tipo === 'plato');
@@ -336,7 +406,7 @@ export default function ConsumiblesPage() {
       </main>
 
       {/* Dialog de Crear/Editar */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      <Dialog open={showDialog} onOpenChange={handleDialogToggle}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">
@@ -391,6 +461,40 @@ export default function ConsumiblesPage() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="imagen">Imagen</Label>
+              <Input
+                id="imagen"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+              />
+              <p className="text-xs text-gray-500">Formatos aceptados: JPG, PNG, WEBP. Tamaño máximo recomendado 2 MB.</p>
+              {formData.imagen?.trim() && (
+                <div className="space-y-2">
+                  <div className="rounded-lg border border-dashed border-gray-300 p-2">
+                    <img
+                      src={formData.imagen}
+                      alt={`Previsualización de ${formData.nombre || 'consumible'}`}
+                      className="h-32 w-full rounded-md object-cover"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span className="truncate pr-2">{selectedImageFile?.name || 'Imagen actual'}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemoveImage}
+                      className="h-8 px-2"
+                    >
+                      Quitar imagen
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="precio">Precio *</Label>
               <Input
                 id="precio"
@@ -405,7 +509,7 @@ export default function ConsumiblesPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>
+            <Button variant="outline" onClick={() => handleDialogToggle(false)}>
               Cancelar
             </Button>
             <Button onClick={handleSave} className="bg-[#1E3A5F] hover:bg-[#2A4A7F]">
@@ -417,3 +521,10 @@ export default function ConsumiblesPage() {
     </div>
   );
 }
+
+
+
+
+
+
+
