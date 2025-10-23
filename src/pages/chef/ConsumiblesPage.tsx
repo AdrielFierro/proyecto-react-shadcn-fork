@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
@@ -29,6 +29,19 @@ export default function ConsumiblesPage() {
     imagen: '',
   });
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const normalize = (s: string) =>
+    (s || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+
+  const filteredConsumibles = useMemo(() => {
+    const q = normalize(searchQuery);
+    if (!q) return consumibles;
+    return consumibles.filter((c) => normalize(c.nombre).includes(q));
+  }, [consumibles, searchQuery]);
 
   const handleLogout = () => {
     logout();
@@ -156,9 +169,9 @@ export default function ConsumiblesPage() {
     }
   };
 
-  const platos = consumibles.filter((c) => c.tipo === 'plato');
-  const bebidas = consumibles.filter((c) => c.tipo === 'bebida');
-  const postres = consumibles.filter((c) => c.tipo === 'postre');
+  const platos = filteredConsumibles.filter((c) => c.tipo === 'plato');
+  const bebidas = filteredConsumibles.filter((c) => c.tipo === 'bebida');
+  const postres = filteredConsumibles.filter((c) => c.tipo === 'postre');
 
   const getIconForTipo = (tipo: string) => {
     switch (tipo) {
@@ -291,6 +304,8 @@ export default function ConsumiblesPage() {
             <Input
               placeholder="Buscar consumibles..."
               className="pl-10 bg-white h-12"
+              value={searchQuery}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
             />
           </div>
         </div>

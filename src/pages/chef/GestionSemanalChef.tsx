@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { Input } from '../../components/ui/input';
 import { User, LogOut, Home, Edit, Plus, CirclePlus, CircleMinus, Trash2 } from 'lucide-react';
 import {
   useAuthStore,
@@ -28,6 +29,7 @@ interface Turno {
 
 type TabKey = 'platos' | 'bebidas' | 'postres';
 type SelectionState = Record<TabKey, string[]>;
+type AnchorState = Record<TabKey, number | null>;
 
 const TURNOS: Turno[] = [
   { id: 'desayuno', nombre: 'Desayuno', horario: '07:00-11:00' },
@@ -50,11 +52,14 @@ const TIPO_BY_TAB: Record<TabKey, Consumible['tipo']> = {
   postres: 'postre',
 };
 
-const createEmptySelection = (): SelectionState => ({
-  platos: [],
-  bebidas: [],
-  postres: [],
-});
+const TAB_LABEL: Record<TabKey, string> = {
+  platos: 'platos',
+  bebidas: 'bebidas',
+  postres: 'postres',
+};
+
+const createEmptySelection = (): SelectionState => ({ platos: [], bebidas: [], postres: [] });
+const createEmptyAnchors = (): AnchorState => ({ platos: null, bebidas: null, postres: null });
 
 export default function GestionSemanalChef() {
   const navigate = useNavigate();
@@ -82,10 +87,18 @@ export default function GestionSemanalChef() {
   const [showDialog, setShowDialog] = useState(false);
   const [editingCell, setEditingCell] = useState<{ turno: TurnoId; dia: DiaSemana } | null>(null);
   const [selectedItems, setSelectedItems] = useState<SelectionState>(() => createEmptySelection());
-  const [listSelection, setListSelection] = useState<{ disponibles: string | null; seleccionados: string | null }>({
-    disponibles: null,
-    seleccionados: null,
-  });
+  const [selDisponibles, setSelDisponibles] = useState<SelectionState>(() => createEmptySelection());
+  const [selSeleccionados, setSelSeleccionados] = useState<SelectionState>(() => createEmptySelection());
+  const [anchorDisponibles, setAnchorDisponibles] = useState<AnchorState>(() => createEmptyAnchors());
+  const [anchorSeleccionados, setAnchorSeleccionados] = useState<AnchorState>(() => createEmptyAnchors());
+  const [search, setSearch] = useState<Record<TabKey, string>>({ platos: '', bebidas: '', postres: '' });
+  const [searchSel, setSearchSel] = useState<Record<TabKey, string>>({ platos: '', bebidas: '', postres: '' });
+
+  const normalize = (s: string) =>
+    (s || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
 
   const handleLogout = () => {
     logout();
@@ -101,7 +114,10 @@ export default function GestionSemanalChef() {
       bebidas: [...(menuActual?.bebidaIds ?? [])],
       postres: [...(menuActual?.postreIds ?? [])],
     });
-    setListSelection({ disponibles: null, seleccionados: null });
+    setSelDisponibles(createEmptySelection());
+    setSelSeleccionados(createEmptySelection());
+    setAnchorDisponibles(createEmptyAnchors());
+    setAnchorSeleccionados(createEmptyAnchors());
     setShowDialog(true);
   };
 
@@ -110,49 +126,49 @@ export default function GestionSemanalChef() {
     if (!open) {
       setEditingCell(null);
       setSelectedItems(createEmptySelection());
-      setListSelection({ disponibles: null, seleccionados: null });
+      setSelDisponibles(createEmptySelection());
+      setSelSeleccionados(createEmptySelection());
+      setAnchorDisponibles(createEmptyAnchors());
+      setAnchorSeleccionados(createEmptyAnchors());
     }
   };
 
   const moverASeleccionados = (tab: TabKey) => {
-    const id = listSelection.disponibles;
-    if (!id) return;
-
-    setSelectedItems((prev) => {
-      if (prev[tab].includes(id)) {
-        return prev;
-      }
-      return {
-        ...prev,
-        [tab]: [...prev[tab], id],
-      };
-    });
-
-    setListSelection({ disponibles: null, seleccionados: null });
+    const ids = selDisponibles[tab];
+    if (!ids.length) return;
+    setSelectedItems((prev) => ({
+      ...prev,
+      [tab]: [...prev[tab], ...ids.filter((id) => !prev[tab].includes(id))],
+    }));
+    setSelDisponibles((prev) => ({ ...prev, [tab]: [] }));
+    setAnchorDisponibles((prev) => ({ ...prev, [tab]: null }));
   };
 
   const moverADisponibles = (tab: TabKey) => {
-    const id = listSelection.seleccionados;
-    if (!id) return;
-
+    const ids = selSeleccionados[tab];
+    if (!ids.length) return;
     setSelectedItems((prev) => ({
       ...prev,
-      [tab]: prev[tab].filter((itemId) => itemId !== id),
+      [tab]: prev[tab].filter((itemId) => !ids.includes(itemId)),
     }));
-
-    setListSelection({ disponibles: null, seleccionados: null });
+    setSelSeleccionados((prev) => ({ ...prev, [tab]: [] }));
+    setAnchorSeleccionados((prev) => ({ ...prev, [tab]: null }));
   };
 
   const getDisponibles = (tab: TabKey) => {
     const all = consumiblesPorTipo[TIPO_BY_TAB[tab]];
     const selected = new Set(selectedItems[tab]);
-    return all.filter((item) => !selected.has(item.id));
+    const q = normalize(search[tab]);
+    const base = all.filter((item) => !selected.has(item.id));
+    return q ? base.filter((item) => normalize(item.nombre).includes(q)) : base;
   };
 
   const getSeleccionados = (tab: TabKey) => {
-    return selectedItems[tab]
+    const q = normalize(searchSel[tab]);
+    const items = selectedItems[tab]
       .map((id) => consumiblesMap.get(id))
       .filter((item): item is Consumible => Boolean(item));
+    return q ? items.filter((item) => normalize(item.nombre).includes(q)) : items;
   };
 
   const calcularPrecioSeleccionado = (selection: SelectionState) => {
@@ -363,15 +379,50 @@ export default function GestionSemanalChef() {
               <TabsContent key={tab} value={tab} className="mt-6">
                 <div className="grid grid-cols-[1fr_auto_1fr] gap-6">
                   <div className="flex flex-col">
-                    <h3 className="font-semibold text-gray-700 mb-3 text-center">Disponibles</h3>
+                    <h3 className="font-semibold text-gray-700 mb-2 text-center">Disponibles</h3>
+                    <div className="mb-2">
+                      <Input
+                        placeholder={`Buscar ${TAB_LABEL[tab]}...`}
+                        value={search[tab]}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setSearch((prev) => ({ ...prev, [tab]: e.target.value }))
+                        }
+                        className="bg-white"
+                      />
+                    </div>
                     <div className="border rounded-lg p-3 bg-gray-50 min-h-[300px] max-h-[300px] overflow-y-auto">
                       <div className="space-y-2">
                         {getDisponibles(tab).map((item) => (
                           <button
                             key={item.id}
-                            onClick={() => setListSelection({ disponibles: item.id, seleccionados: null })}
+                            onClick={(e) => {
+                              // Handler actualizado para soportar Ctrl/Cmd y Shift
+                              // Obtenemos el índice actual dentro de la lista
+                              const items = getDisponibles(tab);
+                              const index = items.findIndex((it) => it.id === item.id);
+                              const ev = e as any;
+                              const isRange = ev.shiftKey;
+                              const isMulti = ev.ctrlKey || ev.metaKey;
+                              if (isRange) {
+                                const anchor = anchorDisponibles[tab] ?? index;
+                                const start = Math.min(anchor, index);
+                                const end = Math.max(anchor, index);
+                                const ids = items.slice(start, end + 1).map((it) => it.id);
+                                setSelDisponibles((prev) => ({ ...prev, [tab]: ids }));
+                              } else if (isMulti) {
+                                setSelDisponibles((prev) => {
+                                  const exists = prev[tab].includes(item.id);
+                                  const next = exists ? prev[tab].filter((id) => id !== item.id) : [...prev[tab], item.id];
+                                  return { ...prev, [tab]: next };
+                                });
+                              } else {
+                                setSelDisponibles((prev) => ({ ...prev, [tab]: [item.id] }));
+                              }
+                              setAnchorDisponibles((prev) => ({ ...prev, [tab]: index }));
+                              setSelSeleccionados((prev) => ({ ...prev, [tab]: [] }));
+                            }}
                             className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
-                              listSelection.disponibles === item.id
+                              selDisponibles[tab].includes(item.id)
                                 ? 'bg-blue-100 border border-blue-400'
                                 : 'bg-white hover:bg-gray-100'
                             }`}
@@ -391,7 +442,7 @@ export default function GestionSemanalChef() {
                       size="icon"
                       variant="outline"
                       onClick={() => moverASeleccionados(tab)}
-                      disabled={!listSelection.disponibles}
+                      disabled={!selDisponibles[tab].length}
                       className="rounded-full h-10 w-10"
                     >
                       <CirclePlus className="w-5 h-5" />
@@ -400,7 +451,7 @@ export default function GestionSemanalChef() {
                       size="icon"
                       variant="outline"
                       onClick={() => moverADisponibles(tab)}
-                      disabled={!listSelection.seleccionados}
+                      disabled={!selSeleccionados[tab].length}
                       className="rounded-full h-10 w-10"
                     >
                       <CircleMinus className="w-5 h-5" />
@@ -408,15 +459,48 @@ export default function GestionSemanalChef() {
                   </div>
 
                   <div className="flex flex-col">
-                    <h3 className="font-semibold text-gray-700 mb-3 text-center">Seleccionados</h3>
+                    <h3 className="font-semibold text-gray-700 mb-2 text-center">Seleccionados</h3>
+                    <div className="mb-2">
+                      <Input
+                        placeholder={`Buscar seleccionados...`}
+                        value={searchSel[tab]}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setSearchSel((prev) => ({ ...prev, [tab]: e.target.value }))
+                        }
+                        className="bg-white"
+                      />
+                    </div>
                     <div className="border rounded-lg p-3 bg-gray-50 min-h-[300px] max-h-[300px] overflow-y-auto">
                       <div className="space-y-2">
                         {getSeleccionados(tab).map((item) => (
                           <button
                             key={item.id}
-                            onClick={() => setListSelection({ disponibles: null, seleccionados: item.id })}
+                            onClick={(e) => {
+                              const items = getSeleccionados(tab);
+                              const index = items.findIndex((it) => it.id === item.id);
+                              const ev = e as any;
+                              const isRange = ev.shiftKey;
+                              const isMulti = ev.ctrlKey || ev.metaKey;
+                              if (isRange) {
+                                const anchor = anchorSeleccionados[tab] ?? index;
+                                const start = Math.min(anchor, index);
+                                const end = Math.max(anchor, index);
+                                const ids = items.slice(start, end + 1).map((it) => it.id);
+                                setSelSeleccionados((prev) => ({ ...prev, [tab]: ids }));
+                              } else if (isMulti) {
+                                setSelSeleccionados((prev) => {
+                                  const exists = prev[tab].includes(item.id);
+                                  const next = exists ? prev[tab].filter((id) => id !== item.id) : [...prev[tab], item.id];
+                                  return { ...prev, [tab]: next };
+                                });
+                              } else {
+                                setSelSeleccionados((prev) => ({ ...prev, [tab]: [item.id] }));
+                              }
+                              setAnchorSeleccionados((prev) => ({ ...prev, [tab]: index }));
+                              setSelDisponibles((prev) => ({ ...prev, [tab]: [] }));
+                            }}
                             className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
-                              listSelection.seleccionados === item.id
+                              selSeleccionados[tab].includes(item.id)
                                 ? 'bg-blue-100 border border-blue-400'
                                 : 'bg-white hover:bg-gray-100'
                             }`}
