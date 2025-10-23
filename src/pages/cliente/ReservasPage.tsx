@@ -63,7 +63,7 @@ export default function ReservasPage() {
       ...(reserva.slotStart && { slotStart: reserva.slotStart }),
       ...(reserva.slotEnd && { slotEnd: reserva.slotEnd }),
     });
-    navigate(`/cliente/nueva-reserva?${params.toString()}`);
+    navigate(`/nueva-reserva?${params.toString()}`);
   };
 
   const handleLogout = () => {
@@ -172,7 +172,7 @@ export default function ReservasPage() {
             <p className="text-sm md:text-base text-gray-600">Gestiona tus reservas activas, finalizadas y canceladas</p>
           </div>
           <Button 
-            onClick={() => navigate('/cliente/nueva-reserva')}
+            onClick={() => navigate('/nueva-reserva')}
             className="bg-[#1E3A5F] hover:bg-[#2a5080] w-full sm:w-auto shrink-0"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -191,7 +191,7 @@ export default function ReservasPage() {
                 <h3 className="text-lg md:text-xl font-semibold mb-2 text-gray-800">No tienes reservas</h3>
                 <p className="text-sm md:text-base text-gray-500 mb-4 md:mb-6">Crea tu primera reserva para comenzar</p>
                 <Button 
-                  onClick={() => navigate('/cliente/nueva-reserva')} 
+                  onClick={() => navigate('/nueva-reserva')} 
                   className="bg-[#1E3A5F] hover:bg-[#2a5080] w-full sm:w-auto"
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -361,3 +361,4 @@ export default function ReservasPage() {
     </div>
   );
 }
+

@@ -267,14 +267,22 @@ export default function NuevaReservaPage() {
                     const fechaString = dateToString(fechaObj);
                     const isSelected = fechaSeleccionada === fechaString;
                     const isPast = fechaObj < today;
+                    const dayOfWeek = fechaObj.getDay();
+                    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                    const isDisabled = isPast || isWeekend;
+                    const secondaryLabel = isWeekend
+                      ? 'No disponible'
+                      : fechaObj.toLocaleDateString('es-ES', { month: 'short' });
                     
                     return (
                       <button
                         key={fechaString}
-                        onClick={() => !isPast && setFechaSeleccionada(fechaString)}
-                        disabled={isPast}
+                        onClick={() => !isDisabled && setFechaSeleccionada(fechaString)}
+                        disabled={isDisabled}
+                        aria-disabled={isDisabled}
+                        title={isWeekend ? 'No disponible en fin de semana' : undefined}
                         className={`aspect-square flex flex-col items-center justify-center rounded-lg text-center transition-all text-xs sm:text-sm ${
-                          isPast
+                          isDisabled
                             ? 'text-gray-400 opacity-60 cursor-not-allowed bg-gray-50'
                             : isSelected
                             ? 'bg-[#1E3A5F] text-white font-bold'
@@ -283,7 +291,7 @@ export default function NuevaReservaPage() {
                       >
                         <div className="text-base sm:text-lg font-semibold">{fechaObj.getDate()}</div>
                         <div className="text-[10px] sm:text-xs">
-                          {fechaObj.toLocaleDateString('es-ES', { month: 'short' })}
+                          {secondaryLabel}
                         </div>
                       </button>
                     );
@@ -549,3 +557,4 @@ export default function NuevaReservaPage() {
     </div>
   );
 }
+
