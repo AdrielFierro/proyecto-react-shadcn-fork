@@ -1,0 +1,16 @@
+{
+  "name": "proyecto-react-shadcn-production",
+  "version": "1.0.0",
+  "description": "Production server for React SPA",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}
