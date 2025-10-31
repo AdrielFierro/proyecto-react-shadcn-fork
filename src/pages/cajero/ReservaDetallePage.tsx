@@ -7,6 +7,7 @@ import { useAuthStore, useReservaStore } from '../../lib/store';
 import { reservasIniciales, sedes, consumibles, usuarios } from '../../lib/data/mockData';
 import { ArrowLeft, User, LogOut, Calendar, Utensils, Wine, Cake, ShoppingCart } from 'lucide-react';
 import type { Reserva, Consumible } from '../../types';
+import { RESERVA_STATUS_LABEL, RESERVA_STATUS_CLASS } from '../../types';
 
 interface CartItem {
   consumible: Consumible;
@@ -193,13 +194,8 @@ useEffect(() => {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Estado de Reserva</p>
-                <Badge className={
-                  reserva.estado === 'pagada' ? 'bg-green-100 text-green-800' :
-                  reserva.estado === 'confirmada' ? 'bg-blue-100 text-blue-800' :
-                  'bg-yellow-100 text-yellow-800'
-                }>
-                  {reserva.estado === 'pagada' ? 'Activa' :
-                   reserva.estado === 'confirmada' ? 'Confirmada' : 'Pendiente'}
+                <Badge className={RESERVA_STATUS_CLASS[reserva.estado]}>
+                  {RESERVA_STATUS_LABEL[reserva.estado]}
                 </Badge>
               </div>
             </div>

@@ -53,19 +53,6 @@ export default function ReservasPage() {
     }
   };
 
-  const handleModificar = (reserva: Reserva) => {
-    // Navegar al wizard con datos precargados
-    const params = new URLSearchParams({
-      reservaId: reserva.id,
-      sedeId: reserva.sedeId,
-      fecha: reserva.fecha,
-      ...(reserva.meal && { meal: reserva.meal }),
-      ...(reserva.slotStart && { slotStart: reserva.slotStart }),
-      ...(reserva.slotEnd && { slotEnd: reserva.slotEnd }),
-    });
-    navigate(`/cliente/nueva-reserva?${params.toString()}`);
-  };
-
   const handleLogout = () => {
     logout();
     navigate('/login');
