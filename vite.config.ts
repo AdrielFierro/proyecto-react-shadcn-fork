@@ -10,4 +10,10 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Asegurar que public/ se copie correctamente (incluyendo web.config)
+  publicDir: 'public',
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+  }
 })

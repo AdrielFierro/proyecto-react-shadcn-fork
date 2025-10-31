@@ -1,0 +1,28 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/images/*.{png,jpg,gif,svg}", "/assets/*", "/*.{css,js,json,xml,ico,svg}"]
+  },
+  "routes": [
+    {
+      "route": "/",
+      "allowedRoles": ["anonymous"]
+    }
+  ],
+  "mimeTypes": {
+    ".json": "application/json",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".svg": "image/svg+xml",
+    ".css": "text/css",
+    ".js": "application/javascript"
+  },
+  "globalHeaders": {
+    "cache-control": "public, max-age=31536000, immutable"
+  },
+  "responseOverrides": {
+    "404": {
+      "rewrite": "/index.html"
+    }
+  }
+}
