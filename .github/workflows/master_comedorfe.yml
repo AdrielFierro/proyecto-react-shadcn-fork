@@ -61,5 +61,5 @@ jobs:
         with:
           app-name: 'comedorfe'
           slot-name: 'Production'
-          package: dist
+          package: .
           
